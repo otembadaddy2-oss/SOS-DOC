@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOS DOC — Espace Centre Médical (démonstration)</title>
+<link rel="icon" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<style>
+  :root{
+    --bg:#070B14; --bg-panel:#0D1626; --bg-panel-2:#101C33; --bg-field:#0B1524;
+    --ink:#EEF1F7; --ink-muted:#9AA7BD; --ink-faint:#5C6B85;
+    --blue:#4C93E0; --blue-dim:#1B3A5C;
+    --gold:#E3A94A; --gold-line:rgba(227,169,74,.35);
+    --urgence:#D6543F; --urgence-soft:rgba(214,84,63,.14);
+    --ok:#4CA783; --ok-soft:rgba(76,167,131,.14);
+    --serif:'Fraunces', Georgia, serif; --sans:'Inter', -apple-system, sans-serif; --mono:'JetBrains Mono', monospace;
+    --maxw:1040px;
+  }
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
+  a{color:inherit;} button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  .grain{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    opacity:.045; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .pulse-ekg{width:100%; height:22px; display:block; overflow:visible;}
+  .pulse-ekg path{
+    fill:none; stroke:url(#pulseGrad); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:430; stroke-dashoffset:430; animation:draw-ekg 4.8s ease-in-out infinite;
+  }
+  @keyframes draw-ekg{
+    0%{stroke-dashoffset:430;} 42%{stroke-dashoffset:0;} 72%{stroke-dashoffset:0;} 100%{stroke-dashoffset:-430;}
+  }
+  @media (prefers-reduced-motion:reduce){ .pulse-ekg path{animation:none; stroke-dashoffset:0; opacity:.5;} }
+
+  img{max-width:100%;}
+
+  .topbar{
+    position:sticky; top:0; z-index:20; background:rgba(7,11,20,.9); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--blue-dim); padding:16px 22px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .topbar .brand{display:flex; align-items:center; gap:11px; font-weight:700; perspective:320px;}
+  .topbar .brand img{width:36px; height:36px; border-radius:8px; animation:brandSpin 2s linear infinite;}
+  @keyframes brandSpin{from{transform:rotateY(0deg);}to{transform:rotateY(360deg);}}
+  @media (prefers-reduced-motion:reduce){ .topbar .brand img{animation:none;} }
+  .topbar a.back{font-size:13px; color:var(--ink-muted); text-decoration:none;}
+  .topbar a.back:hover{color:var(--gold);}
+  .demo-badge{
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--gold); border:1px solid var(--gold-line); border-radius:999px; padding:4px 10px;
+  }
+  .lang-switch{display:flex; border:1px solid var(--blue-dim); border-radius:999px; overflow:hidden; flex-shrink:0;}
+  .lang-btn{
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; padding:6px 12px; border:none;
+    background:transparent; color:var(--ink-muted); cursor:pointer; transition:background .2s, color .2s;
+  }
+  .lang-btn.active{background:var(--gold); color:#1a1204; font-weight:600;}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:32px 22px 80px;}
+  .lede{color:var(--ink-muted); font-size:14px; margin:0 0 28px;}
+  h2.section-title{font-family:var(--sans); font-size:15px; margin:0 0 14px; font-weight:600; color:var(--ink);}
+
+  .centre-card{
+    position:relative; overflow:hidden; isolation:isolate; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    background:linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel));
+    border:1px solid var(--gold-line); border-radius:18px; padding:20px 22px; margin-bottom:24px;
+    box-shadow:0 22px 50px -26px rgba(0,0,0,.65);
+  }
+  .centre-card::before{
+    content:''; position:absolute; top:-60%; right:-15%; width:55%; height:180%;
+    background:radial-gradient(circle, rgba(76,147,224,.20) 0%, rgba(227,169,74,.12) 45%, transparent 72%);
+    filter:blur(20px); z-index:-1;
+  }
+  .centre-avatar{
+    flex-shrink:0; width:58px; height:58px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:600; font-size:18px; color:#1a1204;
+    background:linear-gradient(135deg, var(--gold), #F2C878);
+    box-shadow:0 8px 22px rgba(227,169,74,.3);
+  }
+  .centre-avatar-logo{background:#fff; padding:6px; box-shadow:0 8px 22px rgba(0,0,0,.35);}
+  .centre-avatar-logo img{width:100%; height:100%; object-fit:contain;}
+  .centre-info{flex:1; min-width:200px;}
+  .centre-info .hello{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--gold); margin-bottom:2px;}
+  .centre-info .name{font-family:var(--serif); font-weight:600; font-size:19px; line-height:1.25;}
+  .centre-info .meta{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:5px; font-size:12.5px; color:var(--ink-muted);}
+  .status-dot{display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:11px; color:var(--ok);}
+  .status-dot::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--ok);}
+  .invite-btn{
+    flex-shrink:0; background:transparent; border:1px solid var(--gold-line); color:var(--gold);
+    font-family:var(--sans); font-weight:600; font-size:13px; padding:10px 20px; border-radius:999px;
+    cursor:pointer; transition:background .2s,color .2s;
+  }
+  .invite-btn:hover{background:var(--gold); color:#1a1204;}
+
+  .report-banner{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+    background:var(--bg-panel); border:1px solid var(--gold-line); border-radius:14px;
+    padding:16px 20px; margin-bottom:24px;
+  }
+  .report-banner p{margin:0; font-size:12.5px; color:var(--ink-muted); max-width:480px; line-height:1.5;}
+  .report-banner .xlsx-link{
+    flex-shrink:0; display:inline-flex; align-items:center; gap:8px;
+    background:transparent; border:1px solid var(--gold-line); color:var(--gold);
+    font-family:var(--sans); font-weight:600; font-size:13px;
+    padding:10px 20px; border-radius:999px; text-decoration:none; transition:background .2s,color .2s;
+  }
+  .report-banner .xlsx-link:hover{background:var(--gold); color:#1a1204;}
+
+  .kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:38px;}
+  .kpi{background:var(--bg-panel); border:1px solid var(--blue-dim); border-radius:14px; padding:16px 18px; box-shadow:0 16px 36px -24px rgba(0,0,0,.6);}
+  .kpi .n{font-family:var(--serif); font-size:26px; color:var(--gold);}
+  .kpi .l{font-size:11.5px; color:var(--ink-muted); margin-top:4px;}
+  .kpi .delta{display:inline-block; margin-top:8px; font-family:var(--mono); font-size:10.5px; color:var(--ok); background:var(--ok-soft); border-radius:999px; padding:3px 9px;}
+  .title-pulse{margin:0 0 26px; opacity:.55;}
+
+  .doc-cell{display:flex; align-items:center; gap:10px; min-width:0;}
+  .doc-cell span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .mini-avatar-sm{
+    flex-shrink:0; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:600; font-size:11px; color:#1a1204;
+    background:linear-gradient(135deg, var(--gold), #F2C878); overflow:hidden;
+  }
+  .mini-avatar-sm img{width:100%; height:100%; object-fit:cover; object-position:center 32%;}
+
+  .block{margin-bottom:38px;}
+  .table{border:1px solid var(--blue-dim); border-radius:14px; overflow:hidden;}
+  .trow{
+    display:grid; grid-template-columns:1.5fr 1.2fr 1fr .9fr; gap:10px; align-items:center;
+    padding:14px 18px; border-bottom:1px solid var(--blue-dim); font-size:13px;
+  }
+  .trow:last-child{border-bottom:none;}
+  .trow.header{
+    font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--ink-faint); background:var(--bg-field);
+  }
+  @media (max-width:640px){ .trow{grid-template-columns:1fr 1fr;} .trow span:nth-child(3){display:none;} }
+  .badge{font-family:var(--mono); font-size:10.5px; padding:4px 10px; border-radius:999px; letter-spacing:.03em; display:inline-block;}
+  .badge.attente{background:rgba(227,169,74,.14); color:var(--gold);}
+  .badge.verifie{background:var(--ok-soft); color:var(--ok);}
+  .badge.enligne{background:var(--ok-soft); color:var(--ok);}
+  .badge.horsligne{background:rgba(154,167,189,.14); color:var(--ink-faint);}
+
+  .activity{border-left:2px solid var(--blue-dim); padding-left:18px;}
+  .activity-item{position:relative; padding-bottom:18px; font-size:13px; color:var(--ink-muted);}
+  .activity-item::before{content:''; position:absolute; left:-23px; top:4px; width:8px; height:8px; border-radius:50%; background:var(--gold);}
+  .activity-item .t{font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); display:block; margin-bottom:2px;}
+
+  .demo-note{text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); margin-top:34px; letter-spacing:.03em;}
+
+  .modal-bg{
+    position:fixed; inset:0; background:rgba(4,7,13,.72); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .modal-bg[hidden]{display:none;}
+  .modal-card{
+    background:var(--bg-panel); border:1px solid var(--gold-line); border-radius:18px;
+    max-width:420px; padding:30px 28px; text-align:center;
+  }
+  .modal-card p{color:var(--ink-muted); font-size:14.5px; line-height:1.7;}
+  .modal-close{
+    margin-top:14px; background:none; border:1px solid var(--blue-dim); color:var(--ink);
+    padding:10px 22px; border-radius:999px; cursor:pointer; font-size:14px;
+  }
+  .modal-close:hover{border-color:var(--gold); color:var(--gold);}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="pulseGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#E3A94A" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#E3A94A"/>
+      <stop offset="55%" stop-color="#4C93E0"/>
+      <stop offset="100%" stop-color="#4C93E0" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
+<div class="grain" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+  function initI18n(){
+    var LS_KEY = 'sosdoc_lang';
+    function applyLang(lang){
+      lang = lang === 'en' ? 'en' : 'fr';
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-en]').forEach(function(el){
+        if (el.dataset.fr === undefined) el.dataset.fr = el.innerHTML;
+        el.innerHTML = lang === 'en' ? el.dataset.en : el.dataset.fr;
+      });
+      document.querySelectorAll('.lang-btn').forEach(function(b){
+        var on = b.getAttribute('data-lang') === lang;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      try { localStorage.setItem(LS_KEY, lang); } catch(e){}
+      if (typeof window.onLangChange === 'function') window.onLangChange(lang);
+    }
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); applyLang(b.getAttribute('data-lang')); });
+    });
+    window.SOSDOC_setLang = applyLang;
+    var saved = 'fr';
+    try { saved = localStorage.getItem(LS_KEY) || 'fr'; } catch(e){}
+    applyLang(saved);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initI18n);
+  } else {
+    initI18n();
+  }
+})();
+</script>
+
+<div class="topbar">
+  <div class="brand"><img src="assets/img/logo-sos-doc.webp" alt=""><span data-en="SOS DOC — Medical Center Space">SOS DOC — Espace Centre Médical</span></div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span class="demo-badge" data-en="Demo">Démonstration</span>
+    <div class="lang-switch" role="group" aria-label="Langue / Language">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="back" href="index.html" data-en="&larr; Home">← Accueil</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="centre-card">
+    <div class="centre-avatar centre-avatar-logo" aria-hidden="true"><img src="assets/img/avatar.webp" alt=""></div>
+    <div class="centre-info">
+      <div class="hello" data-en="Welcome">Bienvenue</div>
+      <div class="name">Clinique Havre de Vie</div>
+      <div class="meta">
+        <span data-en="STAR ENTREPRISE subsidiary">Filiale STAR ENTREPRISE</span><span>·</span><span>Pointe-Noire, Congo</span><span>·</span><span data-en="5 affiliated doctors">5 médecins rattachés</span><span>·</span>
+        <span class="status-dot" data-en="Verified center">Centre vérifié</span>
+      </div>
+    </div>
+    <button class="invite-btn" id="inviteBtn" data-en="+ Invite a doctor">+ Inviter un médecin</button>
+  </div>
+
+  <p class="lede" data-en="Overview of your center&rsquo;s activity on SOS DOC &mdash; sample data for demonstration purposes.">Vue d'ensemble de l'activité de votre centre sur SOS DOC — données fictives à titre de démonstration.</p>
+
+  <div class="report-banner">
+    <p data-en="Your center&rsquo;s full activity tracking: patients, doctors, response times &mdash; exportable to Excel with charts and filters.">Suivi complet de l'activité de votre centre : patients, médecins, temps de réponse — exportable en Excel avec graphiques et filtres.</p>
+    <a class="xlsx-link" download="SOS_DOC_Suivi_Statistiques_2026-2035.xlsx" href="assets/docs/SOS_DOC_Suivi_Statistiques_2026-2035.xlsx">📊 Télécharger le rapport (.xlsx)</a>
+  </div>
+
+  <svg class="pulse-ekg title-pulse" viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true"><path d="M0 10 H150 L162 10 L172 1 L182 18 L192 10 L400 10"/></svg>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">742</div><div class="l" data-en="Patients via this center">Patients via ce centre</div><span class="delta" data-en="&#9650; +12% vs last month">▲ +12 % vs mois dernier</span></div>
+    <div class="kpi"><div class="n">5</div><div class="l" data-en="Active doctors">Médecins actifs</div></div>
+    <div class="kpi"><div class="n">63</div><div class="l" data-en="Consultations this month">Consultations ce mois-ci</div></div>
+    <div class="kpi"><div class="n">16 min</div><div class="l" data-en="Average response time">Temps de réponse moyen</div></div>
+    <div class="kpi"><div class="n">97 %</div><div class="l" data-en="Satisfaction rate">Taux de satisfaction</div></div>
+  </div>
+
+  <div class="block">
+    <h2 class="section-title" data-en="Doctors at this center">Médecins de ce centre</h2>
+    <div class="table">
+      <div class="trow header"><span data-en="Name">Nom</span><span data-en="Specialty">Spécialité</span><span data-en="Status">Statut</span><span data-en="Availability">Disponibilité</span></div>
+      <div id="doctorsTable"></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <h2 class="section-title" data-en="Recent activity">Activité récente</h2>
+    <div class="activity" id="activityLog"></div>
+  </div>
+
+  <p class="demo-note" data-en="Demo prototype &mdash; sample center, doctors and activity">Prototype de démonstration — centre, médecins et activité fictifs</p>
+</div>
+
+<div class="modal-bg" id="modalBg" hidden>
+  <div class="modal-card">
+    <p id="modalText"></p>
+    <button class="modal-close" id="modalClose" data-en="Close">Fermer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function lang(){ try { return localStorage.getItem('sosdoc_lang') === 'en' ? 'en' : 'fr'; } catch(e){ return 'fr'; } }
+  function L(d, field){ return lang() === 'en' ? d[field + '_en'] : d[field]; }
+
+  var doctors = [
+    {nom:"Dr Otemba née Lamah Luopou", spec:"Pédiatre", spec_en:"Pediatrician", statut:"verifie", dispo:"enligne", dispo_en:"Online"},
+    {nom:"Dr Mboro Gloire", spec:"Pédiatre généraliste", spec_en:"General Pediatrician", statut:"verifie", dispo:"enligne", dispo_en:"Online"},
+    {nom:"Dr Omope", spec:"Pédiatrie générale", spec_en:"General pediatrics", statut:"attente", dispo:"horsligne", dispo_en:"Offline"},
+    {nom:"Dr. Jean-Paul Ossété", spec:"Pédiatrie générale", spec_en:"General pediatrics", statut:"verifie", dispo:"enligne", dispo_en:"Online"},
+    {nom:"Dr. Thierry Loemba", spec:"Pédiatrie générale", spec_en:"General pediatrics", statut:"verifie", dispo:"horsligne", dispo_en:"Offline"}
+  ];
+
+  function initials(nom){
+    var parts = nom.replace(/^Dr\.?\s*/,'').split(/\s+/).filter(Boolean);
+    return ((parts[0] ? parts[0][0] : '') + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+  function avatarHtml(d){
+    if (d.nom.indexOf('Otemba née Lamah') !== -1) {
+      return '<div class="mini-avatar-sm"><img src="assets/img/dr-otemba-nee-lamah-luopou.webp" alt=""></div>';
+    }
+    return '<div class="mini-avatar-sm">' + initials(d.nom) + '</div>';
+  }
+
+  var body = document.getElementById('doctorsTable');
+  function render(){
+    body.innerHTML = "";
+    var isEn = lang() === 'en';
+    doctors.forEach(function(d){
+      var row = document.createElement('div');
+      row.className = "trow";
+      var statusBadge = d.statut === 'verifie'
+        ? '<span class="badge verifie">' + (isEn ? 'Verified' : 'Vérifié') + '</span>'
+        : '<span class="badge attente">' + (isEn ? 'Pending' : 'En attente') + '</span>';
+      var dispoBadge = '<span class="badge ' + (d.dispo === 'enligne' ? 'enligne' : 'horsligne') + '">' + L(d,'dispo') + '</span>';
+      row.innerHTML =
+        '<span class="doc-cell">' + avatarHtml(d) + '<span>' + d.nom + '</span></span>' +
+        '<span>' + L(d,'spec') + '</span><span>' + statusBadge + '</span><span>' + dispoBadge + '</span>';
+      body.appendChild(row);
+    });
+  }
+  window.onLangChange = render;
+  render();
+
+  var events = [
+    {t:"Il y a 20 min", t_en:"20 min ago", d:"Dr. Ossété a clôturé une consultation.", d_en:"Dr. Ossété closed a consultation."},
+    {t:"Il y a 2 h", t_en:"2 h ago", d:"Dr Otemba née Lamah Luopou a rejoint une consultation urgente.", d_en:"Dr Otemba née Lamah Luopou joined an urgent consultation."},
+    {t:"Hier", t_en:"Yesterday", d:"8 nouvelles consultations enregistrées pour ce centre.", d_en:"8 new consultations recorded for this center."},
+    {t:"Il y a 3 jours", t_en:"3 days ago", d:"Dr Omope a soumis son dossier de vérification.", d_en:"Dr Omope submitted her verification file."}
+  ];
+  var log = document.getElementById('activityLog');
+  function renderEvents(){
+    log.innerHTML = "";
+    var isEn = lang() === 'en';
+    events.forEach(function(e){
+      var el = document.createElement('div');
+      el.className = "activity-item";
+      el.innerHTML = '<span class="t">' + (isEn ? e.t_en : e.t) + '</span>' + (isEn ? e.d_en : e.d);
+      log.appendChild(el);
+    });
+  }
+  var prevOnLangChange = window.onLangChange;
+  window.onLangChange = function(l){ prevOnLangChange(l); renderEvents(); };
+  renderEvents();
+
+  var modalBg = document.getElementById('modalBg');
+  var modalText = document.getElementById('modalText');
+  document.getElementById('inviteBtn').addEventListener('click', function(){
+    var isEn = lang() === 'en';
+    modalText.textContent = isEn
+      ? 'Doctor invitations will be available once your center is fully onboarded. In the meantime, contact the SOS DOC team via WhatsApp: +242 05 597 24 27, or by email: SOSDOC@gmail.com.'
+      : "L'invitation de médecins sera disponible une fois votre centre pleinement intégré. En attendant, contactez l'équipe SOS DOC via WhatsApp : +242 05 597 24 27, ou par e-mail : SOSDOC@gmail.com.";
+    modalBg.hidden = false;
+  });
+  document.getElementById('modalClose').addEventListener('click', function(){ modalBg.hidden = true; });
+  modalBg.addEventListener('click', function(e){ if (e.target === modalBg) modalBg.hidden = true; });
+})();
+</script>
+
+<div id="ownerNotice" style="max-width:1180px; margin:36px auto 18px; padding:0 24px 10px; font-family:'Inter',-apple-system,sans-serif; font-size:11px; line-height:1.5; color:rgba(154,167,189,.5); text-align:center;">
+  Prototype / propriété de STAR ENTREPRISE — Fondateur &amp; PDG Directeur Général : Carry OTEMBA
+</div>
+</body>
+</html>

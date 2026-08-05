@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOS DOC — Un monde. Un médecin. Un espoir.</title>
+<meta name="description" content="SOS DOC — plateforme internationale de téléconsultation médicale pédiatrique. Un monde. Un médecin. Un espoir.">
+<link rel="icon" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<style>
+  :root{
+    --bg:#070B14; --bg-panel:#0D1626; --bg-panel-2:#101C33;
+    --ink:#EEF1F7; --ink-muted:#9AA7BD; --ink-faint:#5C6B85;
+    --blue:#4C93E0; --blue-dim:#1B3A5C;
+    --gold:#E3A94A; --gold-soft:rgba(227,169,74,.14); --gold-line:rgba(227,169,74,.35);
+    --teal:#3FA9A0; --teal-soft:rgba(63,169,160,.14); --teal-line:rgba(63,169,160,.35);
+    --coral:#E8836B; --coral-soft:rgba(232,131,107,.14); --coral-line:rgba(232,131,107,.35);
+    --urgence:#D6543F; --urgence-soft:rgba(214,84,63,.12);
+    --serif:'Fraunces', Georgia, serif;
+    --sans:'Inter', -apple-system, Segoe UI, sans-serif;
+    --mono:'JetBrains Mono', 'SFMono-Regular', monospace;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth; background:var(--bg);}
+  body{
+    margin:0; background:transparent; color:var(--ink); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; position:relative;
+  }
+  .bg-layer{
+    position:fixed; inset:0; z-index:-2; background:var(--bg);
+    background-image:url('assets/img/bg-layer.webp');
+    background-size:cover; background-position:center;
+  }
+  img{max-width:100%; display:block;}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:3px;}
+
+  /* ---- signature : grain + pouls (ekg) ---- */
+  .grain{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    opacity:.045; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .pulse-ekg{width:100%; height:22px; display:block; overflow:visible;}
+  .pulse-ekg path{
+    fill:none; stroke:url(#pulseGrad); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:430; stroke-dashoffset:430; animation:draw-ekg 4.8s ease-in-out infinite;
+  }
+  @keyframes draw-ekg{
+    0%{stroke-dashoffset:430;} 42%{stroke-dashoffset:0;} 72%{stroke-dashoffset:0;} 100%{stroke-dashoffset:-430;}
+  }
+  @media (prefers-reduced-motion:reduce){ .pulse-ekg path{animation:none; stroke-dashoffset:0; opacity:.5;} }
+
+
+  /* ---------------- INTRO ---------------- */
+  .intro{
+    position:fixed; inset:0; background:
+      radial-gradient(ellipse at 50% 30%, rgba(11,24,48,.55) 0%, rgba(7,11,20,.88) 62%);
+    display:flex; align-items:center; justify-content:center;
+    z-index:100; overflow:hidden; cursor:pointer;
+    transition:opacity 1.1s ease, visibility 1.1s ease;
+  }
+  .intro.intro--done{opacity:0; visibility:hidden; pointer-events:none;}
+  .intro-stage{
+    position:relative; width:100%; max-width:640px; min-height:280px; padding:0 28px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .sound-toggle{
+    position:absolute; top:22px; right:22px; z-index:5;
+    background:none; border:1px solid var(--blue-dim); color:var(--ink-muted);
+    width:40px; height:40px; border-radius:50%; font-size:16px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .2s, color .2s;
+  }
+  .sound-toggle:hover{border-color:var(--gold); color:var(--gold);}
+
+  .cursor{color:var(--gold); font-family:var(--mono); animation:blink 1s steps(1) infinite;}
+  @keyframes blink{0%,49%{opacity:1;} 50%,100%{opacity:0;}}
+
+  /* the three intro moments share the same centered slot and simply cross-fade */
+  .intro-layer{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:100%; display:flex; flex-direction:column; align-items:center;
+    opacity:0; pointer-events:none; transition:opacity 1s ease;
+  }
+  .intro-layer.show{ opacity:1; pointer-events:auto; }
+
+  .cursor-solo{font-size:38px;}
+  .tap-hint{
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-faint); margin-top:22px; opacity:0; transition:opacity .8s ease 1.2s;
+  }
+  .tap-hint.is-visible{opacity:1;}
+  .tap-hint.is-hidden{display:none;}
+
+  .type-block{
+    font-family:var(--serif); font-weight:400; font-style:italic;
+    font-size:clamp(21px,4.6vw,32px); line-height:1.5; color:var(--ink);
+  }
+  .inline-cursor{font-size:.85em; margin-left:2px;}
+
+  .logo-visual{position:relative; display:flex; align-items:center; justify-content:center;}
+  .logo-glow{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:300px; height:300px; border-radius:50%;
+    background:radial-gradient(circle, rgba(76,147,224,.32) 0%, rgba(227,169,74,.16) 45%, transparent 72%);
+    filter:blur(6px); animation:breathe 5s ease-in-out infinite; z-index:0;
+  }
+  @keyframes breathe{0%,100%{transform:translate(-50%,-50%) scale(.92); opacity:.7;} 50%{transform:translate(-50%,-50%) scale(1.08); opacity:1;}}
+  .logo-img{
+    position:relative; z-index:1; width:min(58vw,220px); border-radius:22px;
+    box-shadow:0 0 60px rgba(76,147,224,.18);
+  }
+  .cta-btn{
+    margin-top:30px; background:transparent;
+    border:1px solid var(--gold-line); color:var(--gold);
+    font-family:var(--sans); font-weight:600; font-size:15px; letter-spacing:.02em;
+    padding:14px 30px; border-radius:999px; cursor:pointer;
+    opacity:0; transform:translateY(8px); pointer-events:none;
+    transition:opacity 1s ease .3s, transform 1s ease .3s, background .25s, color .25s, box-shadow .25s;
+  }
+  .cta-btn.is-visible{opacity:1; transform:translateY(0); pointer-events:auto;}
+  .cta-btn:hover{background:var(--gold); color:#1a1204; box-shadow:0 8px 30px rgba(227,169,74,.25);}
+
+  @media (prefers-reduced-motion:reduce){
+    .cursor{animation:none; opacity:1;}
+    .logo-glow{animation:none;}
+    .intro, .intro-layer, .cta-btn{transition:none !important;}
+  }
+
+  /* ---------------- MAIN SITE ---------------- */
+  .main{opacity:0; transition:opacity .6s ease;}
+  .main.is-shown{opacity:1;}
+
+  .site-header{
+    max-width:var(--maxw); margin:0 auto; padding:22px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .brand{display:flex; align-items:center; gap:11px; font-family:var(--sans); font-weight:700; letter-spacing:.02em; perspective:320px;}
+  .brand img{width:40px; height:40px; border-radius:9px; animation:brandSpin 2s linear infinite;}
+  @keyframes brandSpin{from{transform:rotateY(0deg);}to{transform:rotateY(360deg);}}
+  @media (prefers-reduced-motion:reduce){ .brand img{animation:none;} }
+  .brand small{display:block; font-family:var(--mono); font-weight:400; font-size:10px; color:var(--ink-faint); letter-spacing:.06em;}
+  .nav-links{display:flex; gap:22px; font-size:14px; color:var(--ink-muted); align-items:center;}
+  .nav-links a{text-decoration:none; transition:color .2s;}
+  .nav-links a:hover{color:var(--gold);}
+  @media (max-width:640px){ .nav-links a{display:none;} }
+
+  .lang-switch{display:flex; border:1px solid var(--blue-dim); border-radius:999px; overflow:hidden; flex-shrink:0;}
+  .lang-btn{
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; padding:6px 12px; border:none;
+    background:transparent; color:var(--ink-muted); cursor:pointer; transition:background .2s, color .2s;
+  }
+  .lang-btn.active{background:var(--gold); color:#1a1204; font-weight:600;}
+  .intro .lang-switch{position:absolute; top:22px; left:22px; z-index:5; border-color:var(--blue-dim); background:rgba(7,11,20,.4);}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--gold); margin:0 0 14px;
+  }
+  .section{max-width:var(--maxw); margin:0 auto; padding:64px 24px;}
+  .section h2{
+    font-family:var(--serif); font-weight:600; font-size:clamp(28px,4.6vw,44px);
+    letter-spacing:-.012em; margin:0 0 18px; line-height:1.14;
+  }
+  .section p.lede{color:var(--ink-muted); font-size:17px; line-height:1.7; max-width:640px;}
+
+  .profiles-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px; margin-top:36px;
+  }
+  .profile-card{
+    position:relative; background:var(--bg-panel); border:1px solid var(--blue-dim); border-radius:16px;
+    padding:26px 20px; text-align:left; cursor:pointer; color:var(--ink);
+    transition:border-color .25s, transform .25s, background .25s;
+    isolation:isolate; overflow:hidden;
+  }
+  .profile-card::before{
+    content:''; position:absolute; top:-40%; right:-30%; width:70%; height:70%;
+    background:radial-gradient(circle, rgba(76,147,224,.20) 0%, rgba(227,169,74,.10) 45%, transparent 72%);
+    filter:blur(18px); opacity:.65; transition:opacity .3s, transform .3s; z-index:-1;
+  }
+  .profile-card:hover{border-color:var(--gold-line); background:var(--bg-panel-2); transform:translateY(-3px);}
+  .profile-card:hover::before{opacity:1; transform:scale(1.15);}
+  .card-icon{
+    display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px;
+    border-radius:13px; margin-bottom:16px;
+    background:linear-gradient(135deg, rgba(227,169,74,.18), rgba(76,147,224,.18));
+    border:1px solid var(--gold-line); transition:transform .3s ease, border-color .3s;
+  }
+  .profile-card:hover .card-icon{transform:scale(1.07) rotate(-3deg); border-color:var(--gold);}
+  .profile-card svg{width:22px; height:22px; stroke:var(--gold); margin:0;}
+  .card-icon.ic-coral{background:linear-gradient(135deg, rgba(232,131,107,.22), rgba(63,169,160,.18)); border-color:var(--coral-line);}
+  .card-icon.ic-coral svg{stroke:var(--coral);}
+  .profile-card:hover .card-icon.ic-coral{border-color:var(--coral);}
+  .profile-card h3{font-family:var(--sans); font-size:15px; font-weight:600; margin:0 0 6px;}
+  .profile-card span{display:block; font-size:13px; color:var(--ink-muted); line-height:1.5;}
+  .section-divider{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
+
+  .steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:28px; margin-top:36px;}
+  .step{border-top:1px solid var(--blue-dim); padding-top:18px;}
+  .step .num{font-family:var(--mono); color:var(--gold); font-size:13px; letter-spacing:.06em;}
+  .step .num.n-teal{color:var(--teal);}
+  .step .num.n-coral{color:var(--coral);}
+  .step h3{font-family:var(--sans); font-size:16px; margin:10px 0 8px;}
+  .step p{color:var(--ink-muted); font-size:14px; line-height:1.6; margin:0;}
+
+  .values-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:28px;}
+  .value-chip{
+    font-family:var(--mono); font-size:12px; color:var(--ink-muted);
+    border:1px solid var(--blue-dim); border-radius:999px; padding:8px 16px;
+  }
+  .value-chip.pay{border-color:rgba(76,147,224,.4); color:var(--blue);}
+  .value-chip.c-coral{border-color:var(--coral-line); color:var(--coral);}
+  .value-chip.c-teal{border-color:var(--teal-line); color:var(--teal);}
+  .value-chip.c-gold{border-color:var(--gold-line); color:var(--gold);}
+
+  .partner-badges{display:flex; flex-wrap:wrap; gap:12px; margin-top:28px;}
+  .partner-badge{
+    background:#fff; border-radius:10px; padding:10px 18px; min-height:44px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 14px 30px -18px rgba(0,0,0,.6); transition:transform .25s ease;
+  }
+  .partner-badge:hover{transform:translateY(-3px);}
+  .partner-badge img{height:30px; width:auto; max-width:120px; object-fit:contain; display:block;}
+
+  .life-photo{
+    position:relative; margin-top:40px; border-radius:20px; overflow:hidden;
+    border:1px solid var(--gold-line); box-shadow:0 24px 60px -30px rgba(0,0,0,.7);
+  }
+  .life-photo.lp-teal{border-color:var(--teal-line);}
+  .life-photo.lp-coral{border-color:var(--coral-line);}
+  .life-photo img{width:100%; height:340px; object-fit:cover; filter:saturate(1.1) contrast(1.03);}
+  .life-photo::after{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(0deg, rgba(7,11,20,.85) 0%, rgba(7,11,20,.05) 55%, rgba(7,11,20,.15) 100%);
+  }
+  .life-photo figcaption{
+    position:absolute; left:24px; right:24px; bottom:18px; z-index:2;
+    font-family:var(--serif); font-size:17px; color:var(--ink); line-height:1.4;
+  }
+  .life-photo figcaption small{
+    display:block; font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--gold); margin-bottom:6px;
+  }
+  .life-photo figcaption small.s-coral{color:var(--coral);}
+  .life-photo figcaption small.s-teal{color:var(--teal);}
+  @media (max-width:640px){ .life-photo img{height:220px;} }
+
+  .doctors-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-top:32px;}
+  .doctor-mini{
+    display:flex; align-items:center; gap:14px; background:var(--bg-panel);
+    border:1px solid var(--blue-dim); border-radius:16px; padding:18px 20px;
+    transition:border-color .25s, transform .25s;
+  }
+  .doctor-mini:hover{border-color:var(--gold-line); transform:translateY(-2px);}
+  .doctor-mini .mini-avatar{
+    flex-shrink:0; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:600; font-size:16px; color:#1a1204;
+    background:linear-gradient(135deg, var(--gold), #F2C878); overflow:hidden;
+  }
+  .doctor-mini .mini-avatar img{width:100%; height:100%; object-fit:cover; object-position:center 32%;}
+  .doctor-mini h3{margin:0 0 3px; font-family:var(--sans); font-size:14.5px; font-weight:600;}
+  .doctor-mini .role{display:block; font-size:12px; color:var(--gold); margin-bottom:2px; font-family:var(--mono); letter-spacing:.02em;}
+  .doctor-mini span.spec{font-size:12.5px; color:var(--ink-muted);}
+
+  .mini-title{font-family:var(--sans); font-size:13px; font-weight:600; color:var(--ink-muted); letter-spacing:.02em; margin:0 0 14px;}
+  .fine-note{font-family:var(--mono); font-size:11.5px; color:var(--ink-faint); margin-top:14px; letter-spacing:.02em;}
+
+  .cta-link{
+    display:inline-flex; align-items:center; gap:8px; margin-top:24px; background:transparent;
+    border:1px solid var(--gold-line); color:var(--gold);
+    font-family:var(--sans); font-weight:600; font-size:14px; letter-spacing:.02em;
+    padding:12px 26px; border-radius:999px; text-decoration:none;
+    transition:background .25s, color .25s, box-shadow .25s;
+  }
+  .cta-link:hover{background:var(--gold); color:#1a1204; box-shadow:0 8px 26px rgba(227,169,74,.25);}
+  .contact-line{font-family:var(--mono); font-size:12.5px; margin-top:8px;}
+  .contact-line a{color:var(--gold); text-decoration:none;}
+  .contact-line a:hover{text-decoration:underline;}
+
+  .vote-widget{
+    max-width:480px; margin:0 auto; text-align:center;
+    background:var(--bg-panel); border:1px solid var(--gold-line); border-radius:20px;
+    padding:34px 26px; box-shadow:0 24px 60px -30px rgba(0,0,0,.65);
+  }
+  .vote-widget h3{font-family:var(--serif); font-weight:600; font-size:20px; margin:0 0 8px;}
+  .vote-widget > p{font-size:13px; color:var(--ink-muted); margin:0 0 24px; line-height:1.6;}
+  .vote-buttons{display:flex; gap:22px; justify-content:center; margin-bottom:24px;}
+  .vote-btn{
+    width:72px; height:72px; border-radius:50%; border:1.5px solid var(--blue-dim);
+    background:var(--bg-field); font-size:28px; cursor:pointer; color:inherit;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .2s ease, border-color .2s, background .2s, box-shadow .2s;
+  }
+  .vote-btn:hover{transform:translateY(-3px); border-color:var(--gold-line);}
+  .vote-btn.selected{border-color:var(--gold); background:rgba(227,169,74,.14); box-shadow:0 0 0 4px rgba(227,169,74,.16);}
+  .vote-btn.down.selected{border-color:var(--urgence); background:var(--urgence-soft); box-shadow:0 0 0 4px rgba(214,84,63,.16);}
+  .vote-tally{display:flex; flex-direction:column; gap:12px; text-align:left;}
+  .vote-row{display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--ink-muted);}
+  .vote-row .track{flex:1; height:8px; border-radius:999px; background:var(--bg-field); overflow:hidden;}
+  .vote-row .fill{height:100%; border-radius:999px; transition:width .5s ease;}
+  .vote-row.up .fill{background:var(--ok);}
+  .vote-row.down .fill{background:var(--urgence);}
+  .vote-row span:last-child{width:38px; text-align:right; font-family:var(--mono);}
+  .vote-thanks{
+    font-family:var(--mono); font-size:11.5px; color:var(--gold); margin:16px 0 0;
+    opacity:0; transition:opacity .4s ease; height:14px;
+  }
+  .vote-thanks.show{opacity:1;}
+
+  .urgence{
+    position:relative; background:var(--urgence-soft); border:1px solid rgba(214,84,63,.35);
+    border-radius:18px; padding:28px 26px; overflow:hidden; isolation:isolate;
+  }
+  .urgence::before{
+    content:''; position:absolute; top:-50%; left:-15%; width:60%; height:140%;
+    background:radial-gradient(circle, rgba(214,84,63,.16) 0%, transparent 70%);
+    filter:blur(20px); z-index:-1;
+  }
+  .urgence h2{font-size:20px; color:#F0B7AC;}
+  .urgence p{color:var(--ink-muted); font-size:15px; line-height:1.7; margin:0;}
+
+  .site-footer{
+    max-width:var(--maxw); margin:0 auto; padding:50px 24px 40px;
+    border-top:1px solid var(--blue-dim); margin-top:40px;
+    display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px;
+    font-size:13px; color:var(--ink-faint);
+  }
+  .site-footer .slogan{font-family:var(--serif); font-style:italic; color:var(--ink-muted); font-size:15px;}
+
+  .profile-note{
+    position:fixed; inset:0; background:rgba(4,7,13,.72); z-index:200;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .profile-note[hidden]{display:none;}
+  .profile-note-card{
+    background:var(--bg-panel); border:1px solid var(--gold-line); border-radius:18px;
+    max-width:420px; padding:30px 28px; text-align:center;
+  }
+  .profile-note-card p{color:var(--ink-muted); font-size:15px; line-height:1.7;}
+  .profile-note-close{
+    margin-top:14px; background:none; border:1px solid var(--blue-dim); color:var(--ink);
+    padding:10px 22px; border-radius:999px; cursor:pointer; font-size:14px;
+  }
+  .profile-note-close:hover{border-color:var(--gold); color:var(--gold);}
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="pulseGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#E3A94A" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#E3A94A"/>
+      <stop offset="55%" stop-color="#4C93E0"/>
+      <stop offset="100%" stop-color="#4C93E0" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
+<div class="grain" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+  function initI18n(){
+    var LS_KEY = 'sosdoc_lang';
+    function applyLang(lang){
+      lang = lang === 'en' ? 'en' : 'fr';
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-en]').forEach(function(el){
+        if (el.dataset.fr === undefined) el.dataset.fr = el.innerHTML;
+        el.innerHTML = lang === 'en' ? el.dataset.en : el.dataset.fr;
+      });
+      document.querySelectorAll('[data-en-ph]').forEach(function(el){
+        if (el.dataset.frPh === undefined) el.dataset.frPh = el.getAttribute('placeholder') || '';
+        el.setAttribute('placeholder', lang === 'en' ? el.dataset.enPh : el.dataset.frPh);
+      });
+      document.querySelectorAll('.lang-btn').forEach(function(b){
+        var on = b.getAttribute('data-lang') === lang;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      try { localStorage.setItem(LS_KEY, lang); } catch(e){}
+      if (typeof window.onLangChange === 'function') window.onLangChange(lang);
+    }
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); applyLang(b.getAttribute('data-lang')); });
+    });
+    window.SOSDOC_setLang = applyLang;
+    var saved = 'fr';
+    try { saved = localStorage.getItem(LS_KEY) || 'fr'; } catch(e){}
+    applyLang(saved);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initI18n);
+  } else {
+    initI18n();
+  }
+})();
+</script>
+
+<div id="intro" class="intro">
+  <div class="lang-switch" role="group" aria-label="Langue / Language">
+    <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+    <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+  <button id="soundToggle" class="sound-toggle" aria-label="Activer le son">🔈</button>
+  <div class="intro-stage">
+    <div id="cursorSolo" class="intro-layer show">
+      <span class="cursor cursor-solo">▌</span>
+    </div>
+
+    <div id="typeBlock" class="intro-layer type-block" aria-live="polite">
+      <span id="typedText"></span><span class="cursor inline-cursor">▌</span>
+    </div>
+
+    <div id="logoBlock" class="intro-layer">
+      <div class="logo-visual">
+        <div class="logo-glow" aria-hidden="true"></div>
+        <img class="logo-img" src="assets/img/logo-sos-doc.webp" alt="SOS DOC — Un monde. Un médecin. Un espoir.">
+      </div>
+      <button id="ctaStart" class="cta-btn" data-en="Start a consultation">Commencer une consultation</button>
+    </div>
+
+    <p id="tapHint" class="tap-hint" data-en="tap the screen to begin">touchez l'écran pour commencer</p>
+  </div>
+</div>
+
+<main id="main" class="main" aria-hidden="true">
+
+  <header class="site-header">
+    <div class="brand">
+      <img src="assets/img/logo-sos-doc.webp" alt="">
+      <span>SOS DOC<small data-en="Global pediatric teleconsultation">téléconsultation pédiatrique mondiale</small></span>
+    </div>
+    <nav class="nav-links">
+      <a href="#profiles" data-en="Profiles">Profils</a>
+      <a href="#how" data-en="How it works">Comment ça marche</a>
+      <a href="#medecins" data-en="Doctors">Médecins</a>
+      <a href="#partenaires" data-en="Partners">Partenaires</a>
+      <a href="#carrieres" data-en="Careers">Carrières</a>
+      <a href="#avis" data-en="Feedback">Avis</a>
+      <a href="#urgence" data-en="Emergency">Urgence</a>
+      <div class="lang-switch" role="group" aria-label="Langue / Language">
+        <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+        <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </nav>
+  </header>
+
+  <section id="profiles" class="section">
+    <p class="eyebrow" data-en="Choose your profile">Choisissez votre profil</p>
+    <h2 data-en="An interface built for everyone.">Une interface pensée pour chacun.</h2>
+    <p class="lede" data-en="SOS DOC adapts to who you are. Select your profile to discover the space that fits you.">SOS DOC s'adapte à qui vous êtes. Sélectionnez votre profil pour découvrir l'espace qui vous correspond.</p>
+
+    <div class="profiles-grid">
+      <button class="profile-card" data-profile="Parent ou Tuteur" data-profile-en="Parent or Guardian" data-href="espace-patient.html">
+        <span class="card-icon ic-coral"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="7" r="3"/><path d="M2 21v-2a5 5 0 0 1 5-5h2"/><circle cx="17" cy="8" r="2.2"/><path d="M13.5 21v-1.6a3.6 3.6 0 0 1 3.6-3.6h0a3.6 3.6 0 0 1 3.6 3.6V21"/></svg></span>
+        <h3 data-en="Parent or Guardian">Parent ou Tuteur</h3>
+        <span data-en="Create your child's file and start a consultation.">Créer le dossier de votre enfant et démarrer une consultation.</span>
+      </button>
+      <button class="profile-card" data-profile="Médecin" data-profile-en="Doctor" data-href="espace-medecin.html">
+        <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 15v2a5 5 0 0 0 10 0v-2"/><circle cx="20" cy="10" r="2"/></svg></span>
+        <h3 data-en="Doctor">Médecin</h3>
+        <span data-en="Receive requests and track your dashboard.">Recevoir les demandes et suivre votre tableau de bord.</span>
+      </button>
+      <button class="profile-card" data-profile="Centre Médical" data-profile-en="Medical Center" data-href="espace-centre.html">
+        <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M9 21v-6h6v6"/><path d="M12 8v4M10 10h4"/></svg></span>
+        <h3 data-en="Medical Center">Centre médical</h3>
+        <span data-en="Oversee multiple doctors and your activity.">Superviser plusieurs médecins et votre activité.</span>
+      </button>
+      <button class="profile-card" data-profile="Partenaire" data-profile-en="Partner" data-href="espace-partenaire.html">
+        <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12l3 3 6-6"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z"/></svg></span>
+        <h3 data-en="Partner">Partenaire</h3>
+        <span data-en="Insurers, companies and organizations integrated with SOS DOC.">Assurances, entreprises et structures intégrées à SOS DOC.</span>
+      </button>
+      <button class="profile-card" data-profile="Organisation Humanitaire" data-profile-en="Humanitarian Organization" data-href="espace-organisation-humanitaire.html">
+        <span class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.35-9.5-8.8C.7 8.4 2.4 5 6 5c2 0 3.3 1 4 2.2C10.7 6 12 5 14 5c3.6 0 5.3 3.4 3.5 7.2C15 16.65 12 21 12 21z"/></svg></span>
+        <h3 data-en="Humanitarian Organization">Organisation humanitaire</h3>
+        <span data-en="Dedicated access for your missions and priority areas.">Accès dédié pour vos missions et zones prioritaires.</span>
+      </button>
+    </div>
+  </section>
+
+  <div class="section-divider" aria-hidden="true">
+    <svg class="pulse-ekg" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 15 H150 L162 15 L172 3 L182 27 L192 15 L400 15"/></svg>
+  </div>
+
+  <section class="section">
+    <p class="eyebrow" data-en="Our values">Nos valeurs</p>
+    <h2 data-en="What guides every decision.">Ce qui guide chaque décision.</h2>
+    <div class="values-row">
+      <span class="value-chip c-coral" data-en="Humanity">Humanité</span>
+      <span class="value-chip c-gold" data-en="Excellence">Excellence</span>
+      <span class="value-chip c-teal" data-en="Innovation">Innovation</span>
+      <span class="value-chip c-coral" data-en="Hope">Espoir</span>
+      <span class="value-chip c-teal" data-en="Ethics">Éthique</span>
+      <span class="value-chip c-teal" data-en="Confidentiality">Confidentialité</span>
+      <span class="value-chip c-gold" data-en="Professionalism">Professionnalisme</span>
+      <span class="value-chip c-coral" data-en="Accessibility">Accessibilité</span>
+    </div>
+    <figure class="life-photo lp-coral">
+      <img src="assets/img/three-kids-joy.webp" alt="" loading="lazy">
+      <figcaption><small class="s-coral" data-en="Our conviction">Notre conviction</small><span data-en="Every child deserves an answer, wherever they are.">Chaque enfant mérite une réponse, où qu'il soit.</span></figcaption>
+    </figure>
+  </section>
+
+  <section id="how" class="section">
+    <p class="eyebrow" data-en="How it works">Comment ça marche</p>
+    <h2 data-en="Three steps to an answer.">Trois étapes vers une réponse.</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="num n-teal">01</span>
+        <h3 data-en="Describe the situation">Décrire la situation</h3>
+        <p data-en="By text, voice message, photo or video — whatever feels most natural to you.">Par texte, message vocal, photo ou vidéo — selon ce qui vous est le plus naturel.</p>
+      </div>
+      <div class="step">
+        <span class="num n-coral">02</span>
+        <h3 data-en="Receive a response">Recevoir une réponse</h3>
+        <p data-en="A verified doctor reviews the request and replies by text, voice note or video call.">Un médecin vérifié étudie la demande et répond par texte, vocal ou appel vidéo.</p>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <h3 data-en="Stay followed up">Assurer le suivi</h3>
+        <p data-en="Automatic reminders, follow-up date, medical file kept secure.">Rappels automatiques, date de contrôle, dossier médical conservé en sécurité.</p>
+      </div>
+    </div>
+    <figure class="life-photo lp-teal">
+      <img src="https://images.pexels.com/photos/5876884/pexels-photo-5876884.jpeg?auto=compress&amp;w=1260&amp;h=750&amp;dpr=1" alt="" loading="lazy">
+      <figcaption><small class="s-teal" data-en="A real moment">Un instant, quelque part</small><span data-en="A child, a parent, a doctor — wherever you are.">Un enfant, un parent, un médecin — à tout moment, où que vous soyez.</span></figcaption>
+    </figure>
+  </section>
+
+  <div class="section-divider" aria-hidden="true">
+    <svg class="pulse-ekg" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 15 H150 L162 15 L172 3 L182 27 L192 15 L400 15"/></svg>
+  </div>
+
+  <section id="medecins" class="section">
+    <p class="eyebrow" data-en="Leadership &amp; medical team">Direction &amp; encadrement médical</p>
+    <h2 data-en="Committed founders, a verified team.">Des fondateurs engagés, une équipe vérifiée.</h2>
+    <p class="lede" data-en="SOS DOC is led by a management and pediatric team engaged on the ground, before being a technology.">SOS DOC est porté par une direction et une équipe pédiatrique engagées sur le terrain, avant d'être une technologie.</p>
+    <div class="doctors-grid">
+      <div class="doctor-mini">
+        <div class="mini-avatar" aria-hidden="true"><img src="assets/img/carry-otemba.webp" alt="Carry Otemba"></div>
+        <div>
+          <h3>Carry Otemba</h3>
+          <span class="role" data-en="Founder President &amp; CEO">Président Fondateur &amp; Directeur Général</span>
+        </div>
+      </div>
+      <div class="doctor-mini">
+        <div class="mini-avatar" aria-hidden="true"><img src="assets/img/dr-otemba-nee-lamah-luopou.webp" alt="Dr Otemba née Lamah Luopou"></div>
+        <div>
+          <h3>Dr Otemba née Lamah Luopou</h3>
+          <span class="role" data-en="Deputy CEO">Directeur Général Adjoint</span>
+          <span class="spec" data-en="Pediatrician">Pédiatre</span>
+        </div>
+      </div>
+      <div class="doctor-mini">
+        <div class="mini-avatar" aria-hidden="true">MG</div>
+        <div>
+          <h3>Dr Mboro Gloire</h3>
+          <span class="spec" data-en="General Pediatrician">Pédiatre généraliste</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider" aria-hidden="true">
+    <svg class="pulse-ekg" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 15 H150 L162 15 L172 3 L182 27 L192 15 L400 15"/></svg>
+  </div>
+
+  <section id="urgence" class="section">
+    <div class="urgence">
+      <h2 data-en="SOS DOC Emergency">SOS DOC Urgence</h2>
+      <p data-en="A family can flag a priority situation to speed up care from a doctor. &lt;strong&gt;SOS DOC does not replace local emergency services.&lt;/strong&gt; If life is in danger, contact your country's emergency services immediately.">Une famille peut signaler une situation prioritaire pour accélérer la prise en charge par un médecin. <strong>SOS DOC ne remplace pas les services d'urgence locaux.</strong> En cas de danger vital, contactez immédiatement les secours de votre pays.</p>
+    </div>
+  </section>
+
+  <section id="partenaires" class="section">
+    <p class="eyebrow" data-en="Ecosystem &amp; trust">Écosystème &amp; confiance</p>
+    <h2 data-en="Designed to fit into your everyday life.">Pensé pour s'intégrer à votre quotidien.</h2>
+    <p class="lede" data-en="Health insurers and payment methods already present in the region — for a simple experience, wherever you are.">Assurances santé et moyens de paiement déjà présents dans la région — pour une expérience simple, où que vous soyez.</p>
+
+    <h3 class="mini-title" data-en="Health insurance (Congo network)">Assurance santé (réseau Congo)</h3>
+    <div class="partner-badges">
+      <div class="partner-badge"><img src="assets/img/nsia-assurances.webp" alt="NSIA Assurances"></div>
+      <div class="partner-badge"><img src="assets/img/sunu-assurances.webp" alt="SUNU Assurances"></div>
+      <div class="partner-badge"><img src="assets/img/olea-assurances.webp" alt="OLEA Assurances"></div>
+      <div class="partner-badge"><img src="assets/img/agc-vie.webp" alt="AGC-VIE"></div>
+      <div class="partner-badge"><img src="assets/img/ascoma-groupe.webp" alt="ASCOMA Groupe"></div>
+      <div class="partner-badge"><img src="assets/img/willis-towers-watson.webp" alt="Willis Towers Watson"></div>
+      <div class="partner-badge"><img src="assets/img/img.webp" alt="Assurances et Réassurances du Congo (ARC)"></div>
+    </div>
+    <p class="fine-note" data-en="Network already active within the STAR ENTREPRISE group — progressively extending to other countries covered by SOS DOC.">Réseau déjà actif au sein du groupe STAR ENTREPRISE — extension progressive aux autres pays couverts par SOS DOC.</p>
+
+    <h3 class="mini-title" style="margin-top:32px;" data-en="Payment methods">Moyens de paiement</h3>
+    <div class="partner-badges">
+      <div class="partner-badge"><img src="assets/img/mtn-mobile-money.webp" alt="MTN Mobile Money"></div>
+      <div class="partner-badge"><img src="assets/img/airtel-money.webp" alt="Airtel Money"></div>
+    </div>
+    <div class="values-row" style="margin-top:12px;">
+      <span class="value-chip pay">Orange Money</span>
+      <span class="value-chip pay">Carte bancaire</span>
+    </div>
+    <p class="fine-note" data-en="Availability varies by country — Congo, DRC, Gabon, Cameroon, Côte d'Ivoire and beyond.">Disponibilité selon les pays — Congo, RDC, Gabon, Cameroun, Côte d'Ivoire et au-delà.</p>
+  </section>
+
+  <div class="section-divider" aria-hidden="true">
+    <svg class="pulse-ekg" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 15 H150 L162 15 L172 3 L182 27 L192 15 L400 15"/></svg>
+  </div>
+
+  <section id="carrieres" class="section">
+    <p class="eyebrow" data-en="Careers">Carrières</p>
+    <h2 data-en="Help build SOS DOC.">Construisons SOS DOC ensemble.</h2>
+    <p class="lede" data-en="Doctors, developers, field coordinators — send a spontaneous application, every profile is reviewed.">Médecins, développeurs, coordinateurs terrain — envoyez une candidature spontanée, chaque profil est étudié.</p>
+    <a class="cta-link" href="https://wa.me/24255972427?text=Bonjour%2C%20je%20souhaite%20postuler%20chez%20SOS%20DOC." data-en="Apply via WhatsApp">Postuler via WhatsApp</a>
+    <p class="contact-line" data-en="Or by phone: &lt;a href=&quot;tel:+242055972427&quot;&gt;+242 05 597 24 27&lt;/a&gt; &mdash; &lt;a href=&quot;mailto:SOSDOC@gmail.com&quot;&gt;SOSDOC@gmail.com&lt;/a&gt;">Ou par téléphone : <a href="tel:+242055972427">+242 05 597 24 27</a> — <a href="mailto:SOSDOC@gmail.com">SOSDOC@gmail.com</a></p>
+  </section>
+
+  <div class="section-divider" aria-hidden="true">
+    <svg class="pulse-ekg" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 15 H150 L162 15 L172 3 L182 27 L192 15 L400 15"/></svg>
+  </div>
+
+  <div class="section-divider" aria-hidden="true">
+    <svg class="pulse-ekg" viewBox="0 0 400 30" preserveAspectRatio="none"><path d="M0 15 H150 L162 15 L172 3 L182 27 L192 15 L400 15"/></svg>
+  </div>
+
+  <section id="avis" class="section">
+    <div class="vote-widget">
+      <h3 data-en="Is SOS DOC useful to you?">SOS DOC vous est-il utile ?</h3>
+      <p data-en="Your opinion helps us improve the platform for families and doctors, from 2026 to 2030.">Votre avis nous aide à améliorer la plateforme pour les familles et les médecins, de 2026 à 2030.</p>
+      <div class="vote-buttons">
+        <button class="vote-btn up" id="voteUp" aria-label="J'aime" data-en-ph="I like it">👍</button>
+        <button class="vote-btn down" id="voteDown" aria-label="Je n'aime pas" data-en-ph="I don't like it">👎</button>
+      </div>
+      <div class="vote-tally">
+        <div class="vote-row up"><span>👍</span><div class="track"><div class="fill" id="fillUp" style="width:0%"></div></div><span id="pctUp">—</span></div>
+        <div class="vote-row down"><span>👎</span><div class="track"><div class="fill" id="fillDown" style="width:0%"></div></div><span id="pctDown">—</span></div>
+      </div>
+      <p class="vote-thanks" id="voteThanks" data-en="Thank you for your feedback!">Merci pour votre avis !</p>
+      <p class="fine-note" id="voteCount" style="margin-top:16px; text-align:center;"></p>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div>
+      <p class="slogan" data-en="One world. One doctor. One hope.">Un monde. Un médecin. Un espoir.</p>
+      <p data-en="SOS DOC — International pediatric teleconsultation platform">SOS DOC — Plateforme internationale de téléconsultation pédiatrique</p>
+    </div>
+    <div>
+      <span data-en="© 2026 SOS DOC — All rights reserved">© 2026 SOS DOC — Tous droits réservés</span><br>
+      <span data-en="Contact: &lt;a href=&quot;tel:+242055972427&quot; style=&quot;color:inherit;&quot;&gt;+242 05 597 24 27&lt;/a&gt; &middot; &lt;a href=&quot;mailto:SOSDOC@gmail.com&quot; style=&quot;color:inherit;&quot;&gt;SOSDOC@gmail.com&lt;/a&gt;">Contact : <a href="tel:+242055972427" style="color:inherit;">+242 05 597 24 27</a> · <a href="mailto:SOSDOC@gmail.com" style="color:inherit;">SOSDOC@gmail.com</a></span><br>
+      <span data-en="Prototype built with Claude · Demo version">Prototype réalisé avec Claude · Version de démonstration</span><br>
+      <span data-en="Prototype / property of STAR ENTREPRISE — Founder &amp; CEO: Carry OTEMBA">Prototype / propriété de STAR ENTREPRISE — Fondateur &amp; PDG Directeur Général : Carry OTEMBA</span><br>
+      <a href="espace-admin.html" style="color:var(--ink-faint); text-decoration:underline;" data-en="Admin space">Espace administrateur</a>
+    </div>
+  </footer>
+</main>
+
+<div id="profileNote" class="profile-note" hidden>
+  <div class="profile-note-card">
+    <p id="profileNoteText"></p>
+    <button class="profile-note-close" id="profileNoteClose" data-en="Close">Fermer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var CITATIONS = {
+    fr: "Chaque enfant mérite une réponse, où qu'il soit.",
+    en: "Every child deserves an answer, wherever they are."
+  };
+  function currentLang(){
+    try { return localStorage.getItem('sosdoc_lang') === 'en' ? 'en' : 'fr'; } catch(e){ return 'fr'; }
+  }
+
+  var intro = document.getElementById('intro');
+  var cursorSolo = document.getElementById('cursorSolo');
+  var tapHint = document.getElementById('tapHint');
+  var typeBlock = document.getElementById('typeBlock');
+  var typedText = document.getElementById('typedText');
+  var logoBlock = document.getElementById('logoBlock');
+  var ctaStart = document.getElementById('ctaStart');
+  var main = document.getElementById('main');
+  var soundToggle = document.getElementById('soundToggle');
+
+  var started = false;
+  var soundOn = true;
+  var audioCtx = null;
+
+  function unlockAudio(){
+    if (audioCtx || !soundOn) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e){ audioCtx = null; }
+  }
+  function bip(freq, delay){
+    if (!soundOn || !audioCtx) return;
+    setTimeout(function(){
+      var t = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.05, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + 0.55);
+    }, delay);
+  }
+  function ambientPad(delay){
+    if (!soundOn || !audioCtx) return;
+    setTimeout(function(){
+      var notes = [261.6, 329.6, 392.0, 523.3];
+      notes.forEach(function(f, i){
+        var t = audioCtx.currentTime + i * 0.55;
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = f;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.035, t + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t); osc.stop(t + 2.8);
+      });
+    }, delay);
+  }
+
+  soundToggle.addEventListener('click', function(e){
+    e.stopPropagation();
+    soundOn = !soundOn;
+    soundToggle.textContent = soundOn ? '🔈' : '🔇';
+    if (soundOn) unlockAudio();
+  });
+
+  function typeCitation(cb){
+    var CITATION = CITATIONS[currentLang()];
+    var i = 0;
+    function step(){
+      if (i <= CITATION.length){
+        typedText.textContent = CITATION.slice(0, i);
+        i++;
+        setTimeout(step, 42 + Math.random() * 30);
+      } else if (cb) {
+        setTimeout(cb, 1600);
+      }
+    }
+    step();
+  }
+
+  function runSequence(){
+    if (started) return;
+    started = true;
+    unlockAudio();
+    tapHint.classList.add('is-hidden');
+
+    if (reduceMotion){
+      cursorSolo.classList.remove('show');
+      typeBlock.classList.add('show');
+      typedText.textContent = CITATIONS[currentLang()];
+      logoBlock.classList.add('show');
+      ctaStart.classList.add('is-visible');
+      return;
+    }
+
+    bip(880, 150);
+    setTimeout(function(){
+      cursorSolo.classList.remove('show');
+      typeBlock.classList.add('show');
+      typeCitation(function(){
+        bip(660, 0);
+        bip(660, 550);
+        typeBlock.classList.remove('show');
+        setTimeout(function(){
+          logoBlock.classList.add('show');
+          ambientPad(150);
+          ctaStart.classList.add('is-visible');
+        }, 700);
+      });
+    }, 500);
+  }
+
+  setTimeout(function(){ if(!started) tapHint.classList.add('is-visible'); }, 900);
+  setTimeout(function(){ if(!started) runSequence(); }, 5000);
+  intro.addEventListener('click', runSequence);
+  intro.addEventListener('touchstart', runSequence, {passive:true});
+  window.addEventListener('keydown', function(e){ if(!started && (e.key === 'Enter' || e.key === ' ')) runSequence(); });
+
+  ctaStart.addEventListener('click', function(e){
+    e.stopPropagation();
+    intro.classList.add('intro--done');
+    main.classList.add('is-shown');
+    main.removeAttribute('aria-hidden');
+    setTimeout(function(){
+      var target = document.getElementById('profiles');
+      if (target) target.scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth'});
+    }, 250);
+  });
+
+  var noteEl = document.getElementById('profileNote');
+  var noteText = document.getElementById('profileNoteText');
+  document.querySelectorAll('.profile-card').forEach(function(card){
+    card.addEventListener('click', function(){
+      var href = card.getAttribute('data-href');
+      if (href) { window.location.href = href; return; }
+      var lang = currentLang();
+      var profile = lang === 'en' ? (card.getAttribute('data-profile-en') || card.getAttribute('data-profile')) : card.getAttribute('data-profile');
+      noteText.textContent = lang === 'en'
+        ? 'The "' + profile + '" space is under construction. It will be central to the next step of SOS DOC.'
+        : "L'espace « " + profile + " » est en cours de construction. Il sera au cœur de la prochaine étape de SOS DOC.";
+      noteEl.hidden = false;
+    });
+  });
+  document.getElementById('profileNoteClose').addEventListener('click', function(){
+    noteEl.hidden = true;
+  });
+  noteEl.addEventListener('click', function(e){ if(e.target === noteEl) noteEl.hidden = true; });
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var BASE_UP = 1284, BASE_DOWN = 57;
+  var KEY = 'sosdoc_vote';
+  var btnUp = document.getElementById('voteUp');
+  var btnDown = document.getElementById('voteDown');
+  var fillUp = document.getElementById('fillUp');
+  var fillDown = document.getElementById('fillDown');
+  var pctUp = document.getElementById('pctUp');
+  var pctDown = document.getElementById('pctDown');
+  var thanks = document.getElementById('voteThanks');
+  var countEl = document.getElementById('voteCount');
+  if (!btnUp || !btnDown) return;
+
+  function getVote(){ try { return localStorage.getItem(KEY); } catch(e){ return null; } }
+  function setVote(v){ try { if (v) localStorage.setItem(KEY, v); else localStorage.removeItem(KEY); } catch(e){} }
+  function lang(){ try { return localStorage.getItem('sosdoc_lang') === 'en' ? 'en' : 'fr'; } catch(e){ return 'fr'; } }
+
+  function render(){
+    var vote = getVote();
+    var up = BASE_UP + (vote === 'up' ? 1 : 0);
+    var down = BASE_DOWN + (vote === 'down' ? 1 : 0);
+    var total = up + down;
+    var pu = Math.round((up / total) * 100);
+    var pd = 100 - pu;
+    fillUp.style.width = pu + '%';
+    fillDown.style.width = pd + '%';
+    pctUp.textContent = pu + '%';
+    pctDown.textContent = pd + '%';
+    btnUp.classList.toggle('selected', vote === 'up');
+    btnDown.classList.toggle('selected', vote === 'down');
+    var L = lang();
+    countEl.textContent = L === 'en'
+      ? total.toLocaleString('en-US') + ' responses since 2026'
+      : total.toLocaleString('fr-FR') + ' avis depuis 2026';
+  }
+
+  function castVote(v){
+    var current = getVote();
+    setVote(current === v ? null : v);
+    render();
+    if (getVote()){
+      thanks.classList.add('show');
+      setTimeout(function(){ thanks.classList.remove('show'); }, 2200);
+    }
+  }
+
+  btnUp.addEventListener('click', function(){ castVote('up'); });
+  btnDown.addEventListener('click', function(){ castVote('down'); });
+  render();
+
+  var prevOnLangChange = window.onLangChange;
+  window.onLangChange = function(l){ if (typeof prevOnLangChange === 'function') prevOnLangChange(l); render(); };
+})();
+</script>
+<script src="assets/js/pioupiou.js" defer></script>
+</body>
+</html>
