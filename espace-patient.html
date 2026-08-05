@@ -84,23 +84,28 @@
   .eyebrow-mini.e-teal{color:var(--teal);}
   .eyebrow-mini.e-coral{color:var(--coral);}
 
-  #view1, #view2{position:relative; isolation:isolate; border-radius:18px; overflow:hidden;}
+  #view1, #view2, #view3{position:relative; isolation:isolate; border-radius:18px; overflow:hidden;}
   .view-bg-photo{
     position:absolute; top:0; width:230px; height:340px; z-index:-1;
-    object-fit:cover; opacity:.92; pointer-events:none;
+    object-fit:cover; opacity:1; pointer-events:none;
   }
   #view1 .view-bg-photo{
     left:0;
-    -webkit-mask-image:linear-gradient(to right, black 55%, transparent 100%);
-    mask-image:linear-gradient(to right, black 55%, transparent 100%);
+    -webkit-mask-image:linear-gradient(to right, black 65%, transparent 100%);
+    mask-image:linear-gradient(to right, black 65%, transparent 100%);
   }
   #view2 .view-bg-photo{
     right:0;
-    -webkit-mask-image:linear-gradient(to left, black 55%, transparent 100%);
-    mask-image:linear-gradient(to left, black 55%, transparent 100%);
+    -webkit-mask-image:linear-gradient(to left, black 65%, transparent 100%);
+    mask-image:linear-gradient(to left, black 65%, transparent 100%);
+  }
+  #view3 .view-bg-photo{
+    left:0;
+    -webkit-mask-image:linear-gradient(to right, black 65%, transparent 100%);
+    mask-image:linear-gradient(to right, black 65%, transparent 100%);
   }
   .view-intro{
-    background:rgba(7,11,20,.66); backdrop-filter:blur(1.5px);
+    background:rgba(7,11,20,.52); backdrop-filter:blur(1.5px);
     border-radius:16px; padding:16px 18px; margin-bottom:20px;
   }
   .view-intro .eyebrow-mini{margin-top:0;}
@@ -421,6 +426,7 @@
 
   <!-- VIEW 3 : CONFIRMATION + SUIVI -->
   <section class="view" id="view3">
+    <img class="view-bg-photo" src="assets/img/three-kids-joy.webp" alt="" loading="eager">
     <div class="confirm-icon">✅</div>
     <p class="eyebrow-mini e-coral" data-en="Step 3 &middot; Follow-up">Étape 3 · Suivi</p>
     <h1 data-en="Request sent">Demande transmise</h1>

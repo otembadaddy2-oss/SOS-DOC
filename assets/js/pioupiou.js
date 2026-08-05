@@ -115,7 +115,7 @@
   ".pp-panel{position:fixed;bottom:98px;right:26px;z-index:95;width:340px;max-width:90vw;height:min(520px,72vh);background:var(--bg-panel);border:1px solid var(--blue-dim);border-radius:20px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(20px) scale(.97);pointer-events:none;transition:.28s ease}" +
   ".pp-panel.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}" +
   ".pp-hero{position:relative;height:172px;flex:none;overflow:hidden;background:linear-gradient(160deg,#101C33,#070B14)}" +
-  ".pp-hero-img{position:absolute;left:50%;bottom:0;width:132px;height:190px;transform:translateX(-50%);background-image:url('assets/img/pioupiou-hero.webp');background-size:cover;background-position:top center;border-radius:14px 14px 0 0;filter:drop-shadow(0 10px 16px rgba(0,0,0,.4));animation:ppHeroBreathe 4.2s ease-in-out infinite}" +
+  ".pp-hero-img{position:absolute;left:50%;bottom:0;width:132px;height:172px;transform:translateX(-50%);background-image:url('assets/img/pioupiou-hero.webp');background-size:cover;background-position:top center;border-radius:14px 14px 0 0;filter:drop-shadow(0 10px 16px rgba(0,0,0,.4));animation:ppHeroBreathe 4.2s ease-in-out infinite}" +
   "@keyframes ppHeroBreathe{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-50%) translateY(-4px) scale(1.02)}}" +
   "@keyframes ppHeroTalk{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-50%) translateY(-2px) scale(1.04)}}" +
   "body.pp-speaking .pp-hero-img{animation:ppHeroTalk .45s ease-in-out infinite}" +
