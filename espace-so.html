@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOS DOC — SO · Solution Orientée (démonstration)</title>
+<link rel="icon" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
+<style>
+  :root{
+    --bg:#070B14; --bg-panel:#0D1626; --bg-panel-2:#101C33; --bg-field:#0B1524;
+    --ink:#EEF1F7; --ink-muted:#9AA7BD; --ink-faint:#5C6B85;
+    --blue:#4C93E0; --blue-dim:#1B3A5C;
+    --gold:#E3A94A; --gold-line:rgba(227,169,74,.35);
+    --teal:#3FA9A0; --teal-soft:rgba(63,169,160,.14); --teal-line:rgba(63,169,160,.4);
+    --coral:#E8836B; --coral-soft:rgba(232,131,107,.14); --coral-line:rgba(232,131,107,.4);
+    --violet:#8B6BFF; --violet-soft:rgba(139,107,255,.16);
+    --ok:#4CA783; --ok-soft:rgba(76,167,131,.14);
+    --serif:'Fraunces', Georgia, serif; --sans:'Inter', -apple-system, sans-serif; --mono:'JetBrains Mono', monospace;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); -webkit-font-smoothing:antialiased;}
+  a{color:inherit;} button, input, select, textarea{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  .grain{
+    position:fixed; inset:0; z-index:-1; pointer-events:none;
+    opacity:.045; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .pulse-ekg{width:100%; height:22px; display:block; overflow:visible;}
+  .pulse-ekg path{
+    fill:none; stroke:url(#pulseGrad); stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:430; stroke-dashoffset:430; animation:draw-ekg 4.8s ease-in-out infinite;
+  }
+  @keyframes draw-ekg{ 0%{stroke-dashoffset:430;} 42%{stroke-dashoffset:0;} 72%{stroke-dashoffset:0;} 100%{stroke-dashoffset:-430;} }
+  @media (prefers-reduced-motion:reduce){ .pulse-ekg path{animation:none; stroke-dashoffset:0; opacity:.5;} }
+  img{max-width:100%;}
+
+  .topbar{
+    position:sticky; top:0; z-index:20; background:rgba(7,11,20,.9); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--blue-dim); padding:16px 22px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .topbar .brand{display:flex; align-items:center; gap:11px; font-weight:700;}
+  .topbar .brand img{width:36px; height:36px; border-radius:8px;}
+  .topbar a.back{font-size:13px; color:var(--ink-muted); text-decoration:none;}
+  .topbar a.back:hover{color:var(--gold);}
+  .demo-badge{
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--gold); border:1px solid var(--gold-line); border-radius:999px; padding:4px 10px;
+  }
+  .lang-switch{display:flex; border:1px solid var(--blue-dim); border-radius:999px; overflow:hidden; flex-shrink:0;}
+  .lang-btn{
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; padding:6px 12px; border:none;
+    background:transparent; color:var(--ink-muted); cursor:pointer; transition:background .2s, color .2s;
+  }
+  .lang-btn.active{background:var(--gold); color:#1a1204; font-weight:600;}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:32px 22px 80px;}
+  .wrap-narrow{max-width:520px; margin:0 auto; padding:48px 22px 80px;}
+  h1{font-family:var(--serif); font-weight:500; font-size:clamp(24px,4vw,30px); margin:0 0 6px;}
+  .lede{color:var(--ink-muted); font-size:14.5px; margin:0 0 28px; line-height:1.6;}
+  .eyebrow-mini{
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--violet); margin:0 0 10px;
+  }
+
+  .so-hero{
+    position:relative; overflow:hidden; isolation:isolate; border-radius:20px; padding:28px 26px; margin-bottom:8px;
+    background:linear-gradient(150deg, #14123a 0%, #1a1030 45%, #0d0f28 100%);
+    border:1px solid rgba(139,107,255,.35);
+  }
+  .so-hero::before{
+    content:''; position:absolute; inset:-20%; z-index:-1;
+    background:radial-gradient(circle at 20% 20%, rgba(139,107,255,.35), transparent 55%),
+               radial-gradient(circle at 85% 75%, rgba(76,147,224,.28), transparent 55%);
+    filter:blur(10px);
+  }
+  .so-hero .tag{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#C6B8FF;}
+  .so-hero h1{margin:6px 0 8px;}
+  .so-hero p{color:#C9CBE0; font-size:14px; line-height:1.65; max-width:620px; margin:0;}
+
+  .field{margin-bottom:18px;}
+  .field label{display:block; font-size:12.5px; color:var(--ink-muted); margin-bottom:7px; letter-spacing:.01em;}
+  .field .opt{color:var(--ink-faint); font-weight:400;}
+  .field input[type=text], .field input[type=tel], .field select, .field textarea{
+    width:100%; background:var(--bg-field); border:1px solid var(--blue-dim); border-radius:10px;
+    padding:12px 14px; color:var(--ink); font-size:14.5px;
+  }
+  .field input:focus, .field select:focus{border-color:var(--gold-line);}
+  .field input[type=file]{
+    width:100%; background:var(--bg-field); border:1px dashed var(--blue-dim); border-radius:10px;
+    padding:12px 14px; color:var(--ink-muted); font-size:13px;
+  }
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:520px){ .row2{grid-template-columns:1fr;} }
+  .row-tel{display:grid; grid-template-columns:110px 1fr; gap:10px;}
+
+  .btn-primary{
+    background:linear-gradient(135deg, var(--violet), #6E4FE0); color:#fff; border:none; font-weight:600; font-size:15px;
+    padding:14px 28px; border-radius:999px; cursor:pointer; width:100%;
+    transition:transform .15s, box-shadow .2s;
+  }
+  .btn-primary:hover{box-shadow:0 10px 28px rgba(139,107,255,.35); transform:translateY(-1px);}
+  .btn-ghost{
+    background:transparent; border:1px solid var(--blue-dim); color:var(--ink-muted);
+    font-size:14px; padding:12px 22px; border-radius:999px; cursor:pointer;
+  }
+  .btn-ghost:hover{border-color:var(--gold-line); color:var(--gold);}
+
+  .disclaimer{
+    display:flex; gap:10px; font-size:12.5px; color:var(--ink-faint); line-height:1.6;
+    background:var(--bg-field); border:1px solid var(--blue-dim); border-radius:12px; padding:12px 14px; margin:22px 0;
+  }
+
+  /* ---- discussion room ---- */
+  .so-room{display:grid; grid-template-columns:250px 1fr; gap:16px;}
+  @media (max-width:820px){ .so-room{grid-template-columns:1fr;} }
+
+  .so-roster{background:var(--bg-panel); border:1px solid var(--blue-dim); border-radius:16px; padding:16px; align-self:start;}
+  .so-roster h2{font-size:12.5px; color:var(--ink-muted); margin:0 0 12px; font-weight:600; letter-spacing:.02em;}
+  .roster-row{display:flex; align-items:center; gap:10px; padding:8px 4px; border-radius:10px;}
+  .roster-row:hover{background:var(--bg-panel-2);}
+  .so-avatar{
+    position:relative; flex-shrink:0; width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    font-family:var(--serif); font-weight:600; font-size:14px; color:#1a1204;
+  }
+  .so-avatar img{width:100%; height:100%; object-fit:cover;}
+  .so-dot{
+    position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%;
+    background:var(--ok); border:2px solid var(--bg-panel);
+  }
+  .so-dot.off{background:var(--ink-faint);}
+  .roster-info{min-width:0;}
+  .roster-info .n{font-size:13px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .roster-info .m{font-size:11.5px; color:var(--ink-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .roster-count{font-family:var(--mono); font-size:10.5px; color:var(--ok); margin-bottom:14px; display:flex; align-items:center; gap:6px;}
+  .roster-count::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 0 rgba(76,167,131,.5); animation:status-pulse 2s ease-in-out infinite;}
+  @keyframes status-pulse{ 0%,100%{box-shadow:0 0 0 0 rgba(76,167,131,.45);} 50%{box-shadow:0 0 0 5px rgba(76,167,131,0);} }
+
+  .so-chat{
+    background:var(--bg-panel); border:1px solid var(--blue-dim); border-radius:16px;
+    display:flex; flex-direction:column; height:min(72vh, 640px); overflow:hidden;
+  }
+  .so-chat-head{
+    padding:14px 18px; border-bottom:1px solid var(--blue-dim); display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .so-chat-head .t{font-family:var(--serif); font-size:16px;}
+  .so-chat-head .s{font-size:11.5px; color:var(--ink-faint);}
+  .so-feed{flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px;}
+  .msg{max-width:76%; display:flex; gap:9px;}
+  .msg.me{align-self:flex-end; flex-direction:row-reverse;}
+  .msg .so-avatar{width:30px; height:30px; font-size:11px;}
+  .msg-body{min-width:0;}
+  .msg .who{font-size:11px; color:var(--ink-faint); margin-bottom:3px; display:flex; gap:6px; align-items:baseline;}
+  .msg.me .who{justify-content:flex-end;}
+  .bubble{
+    background:var(--bg-field); border:1px solid var(--blue-dim); border-radius:14px 14px 14px 4px;
+    padding:10px 13px; font-size:13.8px; line-height:1.55; color:var(--ink);
+  }
+  .msg.me .bubble{background:rgba(139,107,255,.16); border-color:rgba(139,107,255,.4); border-radius:14px 14px 4px 14px;}
+  .bubble.vocal{display:flex; align-items:center; gap:10px; min-width:190px;}
+  .bubble.vocal .playbtn{
+    flex-shrink:0; width:30px; height:30px; border-radius:50%; border:none; cursor:pointer;
+    background:var(--violet); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;
+  }
+  .bubble.vocal .wave{flex:1; height:22px; display:flex; align-items:center; gap:2px;}
+  .bubble.vocal .wave span{flex:1; background:var(--ink-faint); border-radius:2px; min-height:3px;}
+  .bubble.vocal .dur{font-family:var(--mono); font-size:11px; color:var(--ink-faint); flex-shrink:0;}
+  .bubble.file{display:flex; align-items:center; gap:10px;}
+  .bubble.file .fic{width:30px; height:30px; border-radius:8px; background:var(--gold-line); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .bubble.file .fn{font-size:12.8px; font-weight:600;}
+  .bubble.file .fm{font-size:11px; color:var(--ink-faint);}
+
+  .so-compose{border-top:1px solid var(--blue-dim); padding:12px 14px;}
+  .so-compose-row{display:flex; align-items:flex-end; gap:8px;}
+  .so-compose textarea{
+    flex:1; resize:none; min-height:42px; max-height:120px; background:var(--bg-field); border:1px solid var(--blue-dim);
+    border-radius:14px; padding:11px 14px; color:var(--ink); font-size:14px; font-family:var(--sans);
+  }
+  .so-icon-btn{
+    flex-shrink:0; width:42px; height:42px; border-radius:50%; border:1px solid var(--blue-dim); background:var(--bg-field);
+    color:var(--ink-muted); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;
+    transition:border-color .2s, color .2s;
+  }
+  .so-icon-btn:hover{border-color:var(--gold-line); color:var(--gold);}
+  .so-icon-btn.send{background:linear-gradient(135deg, var(--violet), #6E4FE0); color:#fff; border:none;}
+  .so-icon-btn.mic.recording{border-color:var(--coral); color:var(--coral); background:var(--coral-soft); animation:micPulse 1.1s ease-in-out infinite;}
+  @keyframes micPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(232,131,107,.45);} 50%{box-shadow:0 0 0 7px rgba(232,131,107,0);} }
+  .so-compose-note{font-size:10.5px; color:var(--ink-faint); margin-top:8px; text-align:center;}
+
+  .demo-note{text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); margin-top:34px; letter-spacing:.03em;}
+  .step{display:none;}
+  .step.active{display:block;}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="pulseGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8B6BFF" stop-opacity="0"/>
+      <stop offset="45%" stop-color="#8B6BFF"/>
+      <stop offset="55%" stop-color="#4C93E0"/>
+      <stop offset="100%" stop-color="#4C93E0" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>
+<div class="grain" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+  function initI18n(){
+    var LS_KEY = 'sosdoc_lang';
+    function applyLang(lang){
+      lang = lang === 'en' ? 'en' : 'fr';
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-en]').forEach(function(el){
+        if (el.dataset.fr === undefined) el.dataset.fr = el.innerHTML;
+        el.innerHTML = lang === 'en' ? el.dataset.en : el.dataset.fr;
+      });
+      document.querySelectorAll('[data-en-ph]').forEach(function(el){
+        if (el.dataset.frPh === undefined) el.dataset.frPh = el.getAttribute('placeholder') || '';
+        el.setAttribute('placeholder', lang === 'en' ? el.dataset.enPh : el.dataset.frPh);
+      });
+      document.querySelectorAll('.lang-btn').forEach(function(b){
+        var on = b.getAttribute('data-lang') === lang;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      try { localStorage.setItem(LS_KEY, lang); } catch(e){}
+    }
+    document.querySelectorAll('.lang-btn').forEach(function(b){
+      b.addEventListener('click', function(e){ e.stopPropagation(); applyLang(b.getAttribute('data-lang')); });
+    });
+    var saved = 'fr';
+    try { saved = localStorage.getItem(LS_KEY) || 'fr'; } catch(e){}
+    applyLang(saved);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initI18n);
+  else initI18n();
+})();
+</script>
+
+<div class="topbar">
+  <div class="brand"><img src="assets/img/logo-sos-doc.webp" alt=""><span data-en="SOS DOC — SO · Solution-oriented">SOS DOC — SO · Solution Orientée</span></div>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span class="demo-badge" data-en="Demo">Démonstration</span>
+    <div class="lang-switch" role="group" aria-label="Langue / Language">
+      <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="back" href="index.html" data-en="&larr; Home">← Accueil</a>
+  </div>
+</div>
+
+<!-- STEP 1 : CONNEXION -->
+<section class="step active" id="stepLogin">
+  <div class="wrap-narrow">
+    <div class="so-hero" style="margin-bottom:26px;">
+      <p class="tag" data-en="For doctors without borders">Pour les médecins sans frontières</p>
+      <h1 data-en="SO — Solution-Oriented">SO — Solution Orientée</h1>
+      <p data-en="A private space where verified specialists and general practitioners — wherever they practice — exchange in real time to move a difficult case forward together. Not a diagnosis service: a circle of peers.">Un espace privé où médecins spécialistes et généralistes vérifiés — où qu'ils exercent — échangent en temps réel pour faire avancer ensemble un cas difficile. Ce n'est pas un service de diagnostic : c'est un cercle de pairs.</p>
+    </div>
+    <p class="eyebrow-mini" data-en="Sign in">Connexion</p>
+    <h1 style="font-size:22px;" data-en="Your phone number">Votre numéro de téléphone</h1>
+    <p class="lede" data-en="Country code is optional — we'll detect it if left blank.">L'indicatif est facultatif — nous le détectons si vous le laissez vide.</p>
+    <div class="row-tel field">
+      <input type="text" id="soIndicatif" placeholder="+242" data-en-ph="+242">
+      <input type="tel" id="soTel" placeholder="06 656 50 50" data-en-ph="Phone number" required>
+    </div>
+    <button class="btn-primary" id="btnLogin" data-en="Sign in">Se connecter</button>
+    <div class="disclaimer">
+      <span>🔒</span>
+      <span data-en="Reserved for doctors verified by SOS DOC. In this demonstration, no SMS is actually sent.">Réservé aux médecins vérifiés par SOS DOC. Dans cette démonstration, aucun SMS n'est réellement envoyé.</span>
+    </div>
+  </div>
+</section>
+
+<!-- STEP 2 : FICHE MÉDECIN -->
+<section class="step" id="stepProfile">
+  <div class="wrap-narrow">
+    <p class="eyebrow-mini" data-en="Your profile">Votre fiche</p>
+    <h1 data-en="A few details before joining">Quelques informations avant de rejoindre le cercle</h1>
+    <p class="lede" data-en="Visible only to other doctors registered on SO.">Visibles uniquement des autres médecins inscrits sur SO.</p>
+    <div class="row2">
+      <div class="field"><label data-en="Last name">Nom</label><input type="text" id="pNom" required></div>
+      <div class="field"><label data-en="First name">Prénom</label><input type="text" id="pPrenom" required></div>
+    </div>
+    <div class="field"><label data-en="Function">Fonction</label>
+      <select id="pFonction" required>
+        <option value="" disabled selected data-en="Select">Sélectionner</option>
+        <option data-en="General practitioner">Médecin généraliste</option>
+        <option data-en="Specialist — Pediatrics">Médecin spécialiste — Pédiatrie</option>
+        <option data-en="Specialist — Hematology">Médecin spécialiste — Hématologie</option>
+        <option data-en="Specialist — Infectious diseases">Médecin spécialiste — Maladies infectieuses</option>
+        <option data-en="Specialist — Other">Médecin spécialiste — Autre</option>
+        <option data-en="Nurse / Caregiver">Infirmier(ère) / Soignant(e)</option>
+      </select>
+    </div>
+    <div class="field"><label data-en="Position / Institution &lt;span class=&quot;opt&quot;&gt;(optional)&lt;/span&gt;">Poste / Structure <span class="opt">(facultatif)</span></label><input type="text" id="pPoste" placeholder="ex. Médecins Sans Frontières" data-en-ph="e.g. Doctors Without Borders"></div>
+    <div class="row2">
+      <div class="field"><label data-en="Country">Pays</label><input type="text" id="pPays" required></div>
+      <div class="field"><label data-en="City">Ville</label><input type="text" id="pVille" required></div>
+    </div>
+    <div class="field"><label data-en="Photo &lt;span class=&quot;opt&quot;&gt;(optional)&lt;/span&gt;">Photo <span class="opt">(facultatif)</span></label><input type="file" id="pPhoto" accept="image/*"></div>
+    <button class="btn-primary" id="btnJoin" data-en="Join the circle">Rejoindre le cercle</button>
+  </div>
+</section>
+
+<!-- STEP 3 : DISCUSSION -->
+<section class="step" id="stepRoom">
+  <div class="wrap">
+    <div class="so-hero" style="margin-bottom:20px; padding:20px 24px;">
+      <p class="tag" data-en="Peer circle">Cercle de pairs</p>
+      <h1 style="font-size:22px;" data-en="Together, one more clue can change everything">À plusieurs, un indice de plus peut tout changer</h1>
+      <p data-en="Share a case, ask for a second opinion, attach a document — everyone in the circle can read, listen and reply.">Partagez un cas, demandez un second avis, joignez un document — tout le monde dans le cercle peut lire, écouter et répondre.</p>
+    </div>
+
+    <div class="so-room">
+      <aside class="so-roster">
+        <div class="roster-count" id="rosterCount" data-en="4 doctors online">4 médecins en ligne</div>
+        <h2 data-en="The circle">Le cercle</h2>
+        <div id="rosterList"></div>
+      </aside>
+
+      <div class="so-chat">
+        <div class="so-chat-head">
+          <div>
+            <div class="t" data-en="Difficult-case circle">Cercle des cas difficiles</div>
+            <div class="s" data-en="Congo · Mali · Canada · France">Congo · Mali · Canada · France</div>
+          </div>
+          <svg class="pulse-ekg" style="width:80px; opacity:.5;" viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true"><path d="M0 10 H150 L162 10 L172 1 L182 18 L192 10 L400 10"/></svg>
+        </div>
+        <div class="so-feed" id="soFeed"></div>
+        <div class="so-compose">
+          <div class="so-compose-row">
+            <button class="so-icon-btn" id="btnAttach" title="Joindre un document" data-en-title="Attach a document">📎</button>
+            <textarea id="soInput" placeholder="Décrivez le cas, posez votre question au cercle…" data-en-ph="Describe the case, ask the circle a question…" rows="1"></textarea>
+            <button class="so-icon-btn mic" id="btnMic" title="Message vocal" data-en-title="Voice message">🎤</button>
+            <button class="so-icon-btn send" id="btnSend" title="Envoyer" data-en-title="Send">➤</button>
+          </div>
+          <input type="file" id="fileInput" hidden>
+          <p class="so-compose-note" data-en="Demonstration — messages stay in this browser only, for now.">Démonstration — vos messages restent dans ce navigateur pour l'instant.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="ownerNotice" style="max-width:1180px; margin:36px auto 18px; padding:0 24px 10px; font-family:'Inter',-apple-system,sans-serif; font-size:11px; line-height:1.5; color:rgba(154,167,189,.5); text-align:center;">
+  Prototype / propriété de STAR ENTREPRISE — Fondateur &amp; PDG Directeur Général : Carry OTEMBA
+</div>
+
+<script>
+(function(){
+  "use strict";
+  function lang(){ try { return localStorage.getItem('sosdoc_lang') === 'en' ? 'en' : 'fr'; } catch(e){ return 'fr'; } }
+
+  var COLORS = ['var(--gold)','var(--teal)','var(--blue)','var(--coral)','var(--violet)'];
+  function initials(nom, prenom){ return ((prenom||'?')[0] + (nom||'?')[0]).toUpperCase(); }
+
+  var PEERS = [
+    {id:'p1', nom:'Traoré', prenom:'Aïssata', fonction:'Médecin généraliste', fonction_en:'General practitioner', pays:'Mali', ville:'Bamako', online:true, color:'var(--gold)'},
+    {id:'p2', nom:'Bélanger', prenom:'Marc', fonction:'Spécialiste — Hématologie', fonction_en:'Specialist — Hematology', pays:'Canada', ville:'Montréal', online:true, color:'var(--teal)'},
+    {id:'p3', nom:'Nguema', prenom:'Sylvie', fonction:'Spécialiste — Pédiatrie', fonction_en:'Specialist — Pediatrics', pays:'Gabon', ville:'Libreville', online:true, color:'var(--blue)'},
+    {id:'p4', nom:'Dubreuil', prenom:'Claire', fonction:'Médecins Sans Frontières', fonction_en:'Doctors Without Borders', pays:'France', ville:'en mission', online:false, color:'var(--coral)'}
+  ];
+
+  var SEED_MESSAGES = [
+    {from:'p1', text:'Bonjour à tous. J\'ai un enfant de 6 ans suivi pour drépanocytose, 3ᵉ crise vaso-occlusive sévère en 4 mois malgré l\'hydroxyurée bien conduite. Je me demande si une évaluation pour une greffe de moelle a du sens ici. Des avis ?',
+     text_en:'Hello everyone. I have a 6-year-old followed for sickle cell disease, 3rd severe vaso-occlusive crisis in 4 months despite well-managed hydroxyurea. Wondering if a bone marrow transplant evaluation makes sense here. Any thoughts?'},
+    {from:'p2', text:'Bonjour Dr Traoré. Oui, ce profil — crises récurrentes malgré traitement optimal — entre typiquement dans les critères d\'évaluation pour allogreffe. La première étape est le typage HLA de la fratrie si elle existe. Vous avez des frères/sœurs compatibles potentiels ?',
+     text_en:'Hello Dr. Traoré. Yes, this profile — recurring crises despite optimal treatment — typically falls within transplant evaluation criteria. First step is HLA typing of siblings if any exist. Any potentially matching siblings?'},
+    {from:'p1', text:'Une sœur aînée, jamais testée. Je vais orienter la famille vers un typage HLA. Merci Dr Bélanger, ça change beaucoup pour cette famille.',
+     text_en:'An older sister, never tested. I\'ll refer the family for HLA typing. Thank you Dr. Bélanger, this changes a lot for this family.'},
+    {from:'p3', text:'Je peux partager un protocole de suivi post-crise qu\'on utilise à Libreville, utile en attendant les résultats du typage. Je le joins.', file:true, fileName:'Protocole-suivi-VOC-pediatrie.pdf', fileSize:'214 Ko',
+     text_en:'I can share a post-crisis follow-up protocol we use in Libreville, useful while waiting for typing results. Attaching it.'}
+  ];
+
+  var state = { messages: [] };
+
+  function renderRoster(){
+    var el = document.getElementById('rosterList');
+    el.innerHTML = '';
+    var meNom = localStorage.getItem('so_nom') || '';
+    var mePrenom = localStorage.getItem('so_prenom') || '';
+    var mePays = localStorage.getItem('so_pays') || '';
+    var meFonction = localStorage.getItem('so_fonction') || '';
+    var all = PEERS.slice();
+    all.push({id:'me', nom:meNom, prenom:mePrenom, fonction:meFonction, fonction_en:meFonction, pays:mePays, ville:localStorage.getItem('so_ville')||'', online:true, color:'var(--violet)', me:true});
+    var onlineCount = all.filter(function(p){ return p.online; }).length;
+    document.getElementById('rosterCount').textContent = (lang()==='en' ? onlineCount + ' doctors online' : onlineCount + ' médecins en ligne');
+    all.forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'roster-row';
+      row.innerHTML =
+        '<div class="so-avatar" style="background:' + p.color + '">' + initials(p.nom,p.prenom) + '<span class="so-dot' + (p.online?'':' off') + '"></span></div>' +
+        '<div class="roster-info"><div class="n">' + (p.me ? (lang()==='en'?'You':'Vous') : ('Dr ' + p.prenom + ' ' + p.nom)) + '</div>' +
+        '<div class="m">' + (lang()==='en' ? p.fonction_en : p.fonction) + ' · ' + p.pays + '</div></div>';
+      el.appendChild(row);
+    });
+  }
+
+  function peerById(id){ return PEERS.filter(function(p){ return p.id === id; })[0]; }
+
+  function bubbleHTML(m){
+    if (m.vocal) {
+      var bars = '';
+      for (var i=0;i<22;i++){ bars += '<span style="height:' + (20 + Math.round(Math.sin(i*1.3)*40+40)) + '%"></span>'; }
+      return '<div class="bubble vocal"><button class="playbtn" data-audio="' + m.audioUrl + '">▶</button><div class="wave">' + bars + '</div><span class="dur">' + m.dur + '</span></div>';
+    }
+    if (m.file) {
+      return '<div class="bubble file"><span class="fic">📄</span><div><div class="fn">' + m.fileName + '</div><div class="fm">' + m.fileSize + '</div></div></div>';
+    }
+    var txt = lang()==='en' && m.text_en ? m.text_en : m.text;
+    return '<div class="bubble">' + txt + '</div>';
+  }
+
+  function renderFeed(){
+    var feed = document.getElementById('soFeed');
+    feed.innerHTML = '';
+    state.messages.forEach(function(m){
+      var isMe = m.from === 'me';
+      var peer = isMe ? null : peerById(m.from);
+      var row = document.createElement('div');
+      row.className = 'msg' + (isMe ? ' me' : '');
+      var avatarColor = isMe ? 'var(--violet)' : (peer ? peer.color : 'var(--ink-faint)');
+      var avatarInitials = isMe ? initials(localStorage.getItem('so_nom'), localStorage.getItem('so_prenom')) : initials(peer.nom, peer.prenom);
+      var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + peer.prenom + ' ' + peer.nom);
+      row.innerHTML =
+        '<div class="so-avatar" style="background:' + avatarColor + '">' + avatarInitials + '</div>' +
+        '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + '</div>';
+      feed.appendChild(row);
+    });
+    feed.scrollTop = feed.scrollHeight;
+    feed.querySelectorAll('.playbtn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var url = btn.getAttribute('data-audio');
+        if (!url) return;
+        var audio = new Audio(url);
+        audio.play().catch(function(){});
+      });
+    });
+  }
+
+  function seedIfNeeded(){
+    if (state.messages.length) return;
+    SEED_MESSAGES.forEach(function(m){ state.messages.push(m); });
+  }
+
+  // ---- step navigation ----
+  function showStep(id){
+    document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', function(){
+    var tel = document.getElementById('soTel').value.trim();
+    if (!tel) { document.getElementById('soTel').focus(); return; }
+    var ind = document.getElementById('soIndicatif').value.trim();
+    try {
+      localStorage.setItem('so_tel', (ind ? ind + ' ' : '') + tel);
+      var hasProfile = localStorage.getItem('so_nom') && localStorage.getItem('so_prenom');
+      if (hasProfile) { seedIfNeeded(); renderRoster(); renderFeed(); showStep('stepRoom'); }
+      else showStep('stepProfile');
+    } catch(e){ showStep('stepProfile'); }
+  });
+
+  document.getElementById('btnJoin').addEventListener('click', function(){
+    var nom = document.getElementById('pNom').value.trim();
+    var prenom = document.getElementById('pPrenom').value.trim();
+    var fonction = document.getElementById('pFonction').value;
+    var pays = document.getElementById('pPays').value.trim();
+    var ville = document.getElementById('pVille').value.trim();
+    if (!nom || !prenom || !fonction || !pays || !ville) return;
+    try {
+      localStorage.setItem('so_nom', nom);
+      localStorage.setItem('so_prenom', prenom);
+      localStorage.setItem('so_fonction', fonction);
+      localStorage.setItem('so_poste', document.getElementById('pPoste').value.trim());
+      localStorage.setItem('so_pays', pays);
+      localStorage.setItem('so_ville', ville);
+    } catch(e){}
+    seedIfNeeded();
+    renderRoster();
+    renderFeed();
+    showStep('stepRoom');
+  });
+
+  // returning visitor: skip straight to login pre-check
+  try {
+    if (localStorage.getItem('so_tel') && localStorage.getItem('so_nom')) {
+      document.getElementById('soTel').value = (localStorage.getItem('so_tel')||'').replace(/^\+?\d+\s/,'');
+    }
+  } catch(e){}
+
+  // ---- compose ----
+  var soInput = document.getElementById('soInput');
+  soInput.addEventListener('input', function(){
+    soInput.style.height = 'auto';
+    soInput.style.height = Math.min(soInput.scrollHeight, 120) + 'px';
+  });
+
+  function sendText(){
+    var txt = soInput.value.trim();
+    if (!txt) return;
+    state.messages.push({from:'me', text:txt, text_en:txt});
+    soInput.value = '';
+    soInput.style.height = 'auto';
+    renderFeed();
+  }
+  document.getElementById('btnSend').addEventListener('click', sendText);
+  soInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+  });
+
+  document.getElementById('btnAttach').addEventListener('click', function(){
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', function(e){
+    var f = e.target.files && e.target.files[0];
+    if (!f) return;
+    var sizeKo = Math.max(1, Math.round(f.size/1024));
+    state.messages.push({from:'me', file:true, fileName:f.name, fileSize:sizeKo + ' Ko'});
+    renderFeed();
+    e.target.value = '';
+  });
+
+  // ---- voice message (real recording, local playback only) ----
+  var mediaRecorder = null, audioChunks = [], recStart = 0;
+  var micBtn = document.getElementById('btnMic');
+  function fmtDur(sec){ var m = Math.floor(sec/60), s = Math.floor(sec%60); return m + ':' + (s<10?'0':'') + s; }
+
+  micBtn.addEventListener('click', function(){
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      return;
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    navigator.mediaDevices.getUserMedia({ audio:true }).then(function(stream){
+      audioChunks = [];
+      recStart = Date.now();
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = function(e){ if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = function(){
+        var blob = new Blob(audioChunks, { type:'audio/webm' });
+        var url = URL.createObjectURL(blob);
+        var dur = fmtDur((Date.now()-recStart)/1000);
+        state.messages.push({from:'me', vocal:true, audioUrl:url, dur:dur});
+        renderFeed();
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        micBtn.classList.remove('recording');
+      };
+      mediaRecorder.start();
+      micBtn.classList.add('recording');
+    }).catch(function(){});
+  });
+
+  window.addEventListener('storage', function(){});
+})();
+</script>
+</body>
+</html>
