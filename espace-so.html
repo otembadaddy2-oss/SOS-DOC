@@ -199,6 +199,20 @@
   .demo-note{text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); margin-top:34px; letter-spacing:.03em;}
   .step{display:none;}
   .step.active{display:block;}
+
+  .report-banner{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+    background:var(--bg-panel); border:1px solid var(--gold-line); border-radius:14px;
+    padding:16px 20px; margin-top:20px;
+  }
+  .report-banner p{margin:0; font-size:12.5px; color:var(--ink-muted); max-width:520px; line-height:1.5;}
+  .report-banner .xlsx-link{
+    flex-shrink:0; display:inline-flex; align-items:center; gap:8px;
+    background:transparent; border:1px solid var(--gold-line); color:var(--gold);
+    font-family:var(--sans); font-weight:600; font-size:13px;
+    padding:10px 20px; border-radius:999px; text-decoration:none; transition:background .2s,color .2s;
+  }
+  .report-banner .xlsx-link:hover{background:var(--gold); color:#1a1204;}
 </style>
 </head>
 <body>
@@ -351,6 +365,11 @@
           <p class="so-compose-note" data-en="Demonstration — messages stay in this browser only, for now.">Démonstration — vos messages restent dans ce navigateur pour l'instant.</p>
         </div>
       </div>
+    </div>
+
+    <div class="report-banner">
+      <p data-en="Every case shared in the circle — doctors involved, countries, status, outcome — is logged in the same tracking workbook as the rest of SOS DOC, with its own filterable sheet.">Chaque cas partagé dans le cercle — médecins intervenus, pays, statut, issue — est consigné dans le même classeur de suivi que le reste de SOS DOC, sur sa propre feuille filtrable.</p>
+      <a class="xlsx-link" download="SOS_DOC_Suivi_Statistiques_2026-2035.xlsx" href="assets/docs/SOS_DOC_Suivi_Statistiques_2026-2035.xlsx">📊 Télécharger le suivi (.xlsx)</a>
     </div>
   </div>
 </section>
