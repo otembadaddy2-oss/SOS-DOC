@@ -89,7 +89,7 @@
   .field{margin-bottom:18px;}
   .field label{display:block; font-size:12.5px; color:var(--ink-muted); margin-bottom:7px; letter-spacing:.01em;}
   .field .opt{color:var(--ink-faint); font-weight:400;}
-  .field input[type=text], .field input[type=tel], .field select, .field textarea{
+  .field input[type=text], .field input[type=tel], .field input[type=email], .field input[type=password], .field select, .field textarea{
     width:100%; background:var(--bg-field); border:1px solid var(--blue-dim); border-radius:10px;
     padding:12px 14px; color:var(--ink); font-size:14.5px;
   }
@@ -284,16 +284,15 @@
       <p data-en="A private space where verified specialists and general practitioners — wherever they practice — exchange in real time to move a difficult case forward together. Not a diagnosis service: a circle of peers.">Un espace privé où médecins spécialistes et généralistes vérifiés — où qu'ils exercent — échangent en temps réel pour faire avancer ensemble un cas difficile. Ce n'est pas un service de diagnostic : c'est un cercle de pairs.</p>
     </div>
     <p class="eyebrow-mini" data-en="Sign in">Connexion</p>
-    <h1 style="font-size:22px;" data-en="Your phone number">Votre numéro de téléphone</h1>
-    <p class="lede" data-en="Country code is optional — we'll detect it if left blank.">L'indicatif est facultatif — nous le détectons si vous le laissez vide.</p>
-    <div class="row-tel field">
-      <input type="text" id="soIndicatif" placeholder="+242" data-en-ph="+242">
-      <input type="tel" id="soTel" placeholder="06 656 50 50" data-en-ph="Phone number" required>
-    </div>
+    <h1 style="font-size:22px;" data-en="Your professional email">Votre email professionnel</h1>
+    <p class="lede" data-en="First time here? Just enter an email and a password — your account is created automatically.">Première visite ? Entrez simplement un email et un mot de passe — votre compte se crée automatiquement.</p>
+    <div class="field"><input type="email" id="soEmail" placeholder="dr.nom@exemple.com" data-en-ph="dr.name@example.com" required></div>
+    <div class="field"><input type="password" id="soPassword" placeholder="Mot de passe" data-en-ph="Password" required></div>
     <button class="btn-primary" id="btnLogin" data-en="Sign in">Se connecter</button>
+    <p class="lede" id="loginError" style="color:var(--coral); display:none; margin:10px 0 0;"></p>
     <div class="disclaimer">
       <span>🔒</span>
-      <span data-en="Reserved for doctors verified by SOS DOC. In this demonstration, no SMS is actually sent.">Réservé aux médecins vérifiés par SOS DOC. Dans cette démonstration, aucun SMS n'est réellement envoyé.</span>
+      <span data-en="Reserved for doctors verified by SOS DOC." id="disclaimerText">Réservé aux médecins vérifiés par SOS DOC.</span>
     </div>
   </div>
 </section>
@@ -362,7 +361,7 @@
             <button class="so-icon-btn send" id="btnSend" title="Envoyer" data-en-title="Send">➤</button>
           </div>
           <input type="file" id="fileInput" hidden>
-          <p class="so-compose-note" data-en="Demonstration — messages stay in this browser only, for now.">Démonstration — vos messages restent dans ce navigateur pour l'instant.</p>
+          <p class="so-compose-note" id="composeNote" data-en="Demonstration — messages stay in this browser only, for now.">Démonstration — vos messages restent dans ce navigateur pour l'instant.</p>
         </div>
       </div>
     </div>
@@ -378,57 +377,39 @@
   Prototype / propriété de STAR ENTREPRISE — Fondateur &amp; PDG Directeur Général : Carry OTEMBA
 </div>
 
+<!--
+  ====================================================================
+  FIREBASE — à remplacer par la config réelle du projet une fois créée
+  (Console Firebase > Paramètres du projet > Vos applications > Web).
+  Tant que apiKey vaut "REPLACE_ME", la page reste en mode démonstration
+  (localStorage, aucune donnée envoyée nulle part) — rien ne casse.
+  ====================================================================
+-->
+<script>
+  var FIREBASE_CONFIG = {
+    apiKey: "REPLACE_ME",
+    authDomain: "REPLACE_ME.firebaseapp.com",
+    projectId: "REPLACE_ME",
+    storageBucket: "REPLACE_ME.appspot.com",
+    messagingSenderId: "REPLACE_ME",
+    appId: "REPLACE_ME"
+  };
+  var FIREBASE_READY = FIREBASE_CONFIG.apiKey !== "REPLACE_ME";
+</script>
+<script>if (window.FIREBASE_READY) { document.write(
+  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><\/script>' +
+  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"><\/script>' +
+  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"><\/script>' +
+  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"><\/script>'
+); }</script>
+
 <script>
 (function(){
   "use strict";
   function lang(){ try { return localStorage.getItem('sosdoc_lang') === 'en' ? 'en' : 'fr'; } catch(e){ return 'fr'; } }
 
-  var COLORS = ['var(--gold)','var(--teal)','var(--blue)','var(--coral)','var(--violet)'];
   function initials(nom, prenom){ return ((prenom||'?')[0] + (nom||'?')[0]).toUpperCase(); }
-
-  var PEERS = [
-    {id:'p1', nom:'Traoré', prenom:'Aïssata', fonction:'Médecin généraliste', fonction_en:'General practitioner', pays:'Mali', ville:'Bamako', online:true, color:'var(--gold)'},
-    {id:'p2', nom:'Bélanger', prenom:'Marc', fonction:'Spécialiste — Hématologie', fonction_en:'Specialist — Hematology', pays:'Canada', ville:'Montréal', online:true, color:'var(--teal)'},
-    {id:'p3', nom:'Nguema', prenom:'Sylvie', fonction:'Spécialiste — Pédiatrie', fonction_en:'Specialist — Pediatrics', pays:'Gabon', ville:'Libreville', online:true, color:'var(--blue)'},
-    {id:'p4', nom:'Dubreuil', prenom:'Claire', fonction:'Médecins Sans Frontières', fonction_en:'Doctors Without Borders', pays:'France', ville:'en mission', online:false, color:'var(--coral)'}
-  ];
-
-  var SEED_MESSAGES = [
-    {from:'p1', text:'Bonjour à tous. J\'ai un enfant de 6 ans suivi pour drépanocytose, 3ᵉ crise vaso-occlusive sévère en 4 mois malgré l\'hydroxyurée bien conduite. Je me demande si une évaluation pour une greffe de moelle a du sens ici. Des avis ?',
-     text_en:'Hello everyone. I have a 6-year-old followed for sickle cell disease, 3rd severe vaso-occlusive crisis in 4 months despite well-managed hydroxyurea. Wondering if a bone marrow transplant evaluation makes sense here. Any thoughts?'},
-    {from:'p2', text:'Bonjour Dr Traoré. Oui, ce profil — crises récurrentes malgré traitement optimal — entre typiquement dans les critères d\'évaluation pour allogreffe. La première étape est le typage HLA de la fratrie si elle existe. Vous avez des frères/sœurs compatibles potentiels ?',
-     text_en:'Hello Dr. Traoré. Yes, this profile — recurring crises despite optimal treatment — typically falls within transplant evaluation criteria. First step is HLA typing of siblings if any exist. Any potentially matching siblings?'},
-    {from:'p1', text:'Une sœur aînée, jamais testée. Je vais orienter la famille vers un typage HLA. Merci Dr Bélanger, ça change beaucoup pour cette famille.',
-     text_en:'An older sister, never tested. I\'ll refer the family for HLA typing. Thank you Dr. Bélanger, this changes a lot for this family.'},
-    {from:'p3', text:'Je peux partager un protocole de suivi post-crise qu\'on utilise à Libreville, utile en attendant les résultats du typage. Je le joins.', file:true, fileName:'Protocole-suivi-VOC-pediatrie.pdf', fileSize:'214 Ko',
-     text_en:'I can share a post-crisis follow-up protocol we use in Libreville, useful while waiting for typing results. Attaching it.'}
-  ];
-
-  var state = { messages: [] };
-
-  function renderRoster(){
-    var el = document.getElementById('rosterList');
-    el.innerHTML = '';
-    var meNom = localStorage.getItem('so_nom') || '';
-    var mePrenom = localStorage.getItem('so_prenom') || '';
-    var mePays = localStorage.getItem('so_pays') || '';
-    var meFonction = localStorage.getItem('so_fonction') || '';
-    var all = PEERS.slice();
-    all.push({id:'me', nom:meNom, prenom:mePrenom, fonction:meFonction, fonction_en:meFonction, pays:mePays, ville:localStorage.getItem('so_ville')||'', online:true, color:'var(--violet)', me:true});
-    var onlineCount = all.filter(function(p){ return p.online; }).length;
-    document.getElementById('rosterCount').textContent = (lang()==='en' ? onlineCount + ' doctors online' : onlineCount + ' médecins en ligne');
-    all.forEach(function(p){
-      var row = document.createElement('div');
-      row.className = 'roster-row';
-      row.innerHTML =
-        '<div class="so-avatar" style="background:' + p.color + '">' + initials(p.nom,p.prenom) + '<span class="so-dot' + (p.online?'':' off') + '"></span></div>' +
-        '<div class="roster-info"><div class="n">' + (p.me ? (lang()==='en'?'You':'Vous') : ('Dr ' + p.prenom + ' ' + p.nom)) + '</div>' +
-        '<div class="m">' + (lang()==='en' ? p.fonction_en : p.fonction) + ' · ' + p.pays + '</div></div>';
-      el.appendChild(row);
-    });
-  }
-
-  function peerById(id){ return PEERS.filter(function(p){ return p.id === id; })[0]; }
+  function fmtDur(sec){ var m = Math.floor(sec/60), s = Math.floor(sec%60); return m + ':' + (s<10?'0':'') + s; }
 
   function bubbleHTML(m){
     if (m.vocal) {
@@ -440,129 +421,38 @@
       return '<div class="bubble file"><span class="fic">📄</span><div><div class="fn">' + m.fileName + '</div><div class="fm">' + m.fileSize + '</div></div></div>';
     }
     var txt = lang()==='en' && m.text_en ? m.text_en : m.text;
-    return '<div class="bubble">' + txt + '</div>';
+    return '<div class="bubble">' + (txt||'').replace(/</g,'&lt;') + '</div>';
   }
 
-  function renderFeed(){
-    var feed = document.getElementById('soFeed');
-    feed.innerHTML = '';
-    state.messages.forEach(function(m){
-      var isMe = m.from === 'me';
-      var peer = isMe ? null : peerById(m.from);
-      var row = document.createElement('div');
-      row.className = 'msg' + (isMe ? ' me' : '');
-      var avatarColor = isMe ? 'var(--violet)' : (peer ? peer.color : 'var(--ink-faint)');
-      var avatarInitials = isMe ? initials(localStorage.getItem('so_nom'), localStorage.getItem('so_prenom')) : initials(peer.nom, peer.prenom);
-      var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + peer.prenom + ' ' + peer.nom);
-      row.innerHTML =
-        '<div class="so-avatar" style="background:' + avatarColor + '">' + avatarInitials + '</div>' +
-        '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + '</div>';
-      feed.appendChild(row);
-    });
-    feed.scrollTop = feed.scrollHeight;
-    feed.querySelectorAll('.playbtn').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var url = btn.getAttribute('data-audio');
-        if (!url) return;
-        var audio = new Audio(url);
-        audio.play().catch(function(){});
-      });
-    });
-  }
-
-  function seedIfNeeded(){
-    if (state.messages.length) return;
-    SEED_MESSAGES.forEach(function(m){ state.messages.push(m); });
-  }
-
-  // ---- step navigation ----
   function showStep(id){
     document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
   }
 
-  document.getElementById('btnLogin').addEventListener('click', function(){
-    var tel = document.getElementById('soTel').value.trim();
-    if (!tel) { document.getElementById('soTel').focus(); return; }
-    var ind = document.getElementById('soIndicatif').value.trim();
-    try {
-      localStorage.setItem('so_tel', (ind ? ind + ' ' : '') + tel);
-      var hasProfile = localStorage.getItem('so_nom') && localStorage.getItem('so_prenom');
-      if (hasProfile) { seedIfNeeded(); renderRoster(); renderFeed(); showStep('stepRoom'); }
-      else showStep('stepProfile');
-    } catch(e){ showStep('stepProfile'); }
-  });
-
-  document.getElementById('btnJoin').addEventListener('click', function(){
-    var nom = document.getElementById('pNom').value.trim();
-    var prenom = document.getElementById('pPrenom').value.trim();
-    var fonction = document.getElementById('pFonction').value;
-    var pays = document.getElementById('pPays').value.trim();
-    var ville = document.getElementById('pVille').value.trim();
-    if (!nom || !prenom || !fonction || !pays || !ville) return;
-    try {
-      localStorage.setItem('so_nom', nom);
-      localStorage.setItem('so_prenom', prenom);
-      localStorage.setItem('so_fonction', fonction);
-      localStorage.setItem('so_poste', document.getElementById('pPoste').value.trim());
-      localStorage.setItem('so_pays', pays);
-      localStorage.setItem('so_ville', ville);
-    } catch(e){}
-    seedIfNeeded();
-    renderRoster();
-    renderFeed();
-    showStep('stepRoom');
-  });
-
-  // returning visitor: skip straight to login pre-check
-  try {
-    if (localStorage.getItem('so_tel') && localStorage.getItem('so_nom')) {
-      document.getElementById('soTel').value = (localStorage.getItem('so_tel')||'').replace(/^\+?\d+\s/,'');
-    }
-  } catch(e){}
-
-  // ---- compose ----
+  // shared compose UI wiring — the actual send/record actions are bound
+  // per-mode below (Firebase vs demo), via window.SO_ACTIONS
   var soInput = document.getElementById('soInput');
   soInput.addEventListener('input', function(){
     soInput.style.height = 'auto';
     soInput.style.height = Math.min(soInput.scrollHeight, 120) + 'px';
   });
-
-  function sendText(){
-    var txt = soInput.value.trim();
-    if (!txt) return;
-    state.messages.push({from:'me', text:txt, text_en:txt});
-    soInput.value = '';
-    soInput.style.height = 'auto';
-    renderFeed();
-  }
-  document.getElementById('btnSend').addEventListener('click', sendText);
+  document.getElementById('btnSend').addEventListener('click', function(){ window.SO_ACTIONS.sendText(); });
   soInput.addEventListener('keydown', function(e){
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.SO_ACTIONS.sendText(); }
   });
-
   document.getElementById('btnAttach').addEventListener('click', function(){
     document.getElementById('fileInput').click();
   });
   document.getElementById('fileInput').addEventListener('change', function(e){
     var f = e.target.files && e.target.files[0];
     if (!f) return;
-    var sizeKo = Math.max(1, Math.round(f.size/1024));
-    state.messages.push({from:'me', file:true, fileName:f.name, fileSize:sizeKo + ' Ko'});
-    renderFeed();
+    window.SO_ACTIONS.sendFile(f);
     e.target.value = '';
   });
-
-  // ---- voice message (real recording, local playback only) ----
   var mediaRecorder = null, audioChunks = [], recStart = 0;
   var micBtn = document.getElementById('btnMic');
-  function fmtDur(sec){ var m = Math.floor(sec/60), s = Math.floor(sec%60); return m + ':' + (s<10?'0':'') + s; }
-
   micBtn.addEventListener('click', function(){
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-      return;
-    }
+    if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); return; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
     navigator.mediaDevices.getUserMedia({ audio:true }).then(function(stream){
       audioChunks = [];
@@ -571,10 +461,8 @@
       mediaRecorder.ondataavailable = function(e){ if (e.data.size > 0) audioChunks.push(e.data); };
       mediaRecorder.onstop = function(){
         var blob = new Blob(audioChunks, { type:'audio/webm' });
-        var url = URL.createObjectURL(blob);
         var dur = fmtDur((Date.now()-recStart)/1000);
-        state.messages.push({from:'me', vocal:true, audioUrl:url, dur:dur});
-        renderFeed();
+        window.SO_ACTIONS.sendVocal(blob, dur);
         stream.getTracks().forEach(function(t){ t.stop(); });
         micBtn.classList.remove('recording');
       };
@@ -583,7 +471,322 @@
     }).catch(function(){});
   });
 
-  window.addEventListener('storage', function(){});
+  function bindFeedPlayButtons(){
+    document.querySelectorAll('#soFeed .playbtn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var url = btn.getAttribute('data-audio');
+        if (!url) return;
+        new Audio(url).play().catch(function(){});
+      });
+    });
+  }
+
+  // ======================================================================
+  // MODE DÉMONSTRATION — pas de Firebase configuré : tout reste local
+  // ======================================================================
+  function startDemoMode(){
+    document.getElementById('composeNote').textContent = lang()==='en'
+      ? 'Demonstration — messages stay in this browser only, for now.'
+      : 'Démonstration — vos messages restent dans ce navigateur pour l\'instant.';
+    document.getElementById('disclaimerText').textContent = lang()==='en'
+      ? 'Reserved for doctors verified by SOS DOC. Demonstration — no account is actually created.'
+      : 'Réservé aux médecins vérifiés par SOS DOC. Démonstration — aucun compte n\'est réellement créé.';
+
+    var PEERS = [
+      {id:'p1', nom:'Traoré', prenom:'Aïssata', fonction:'Médecin généraliste', fonction_en:'General practitioner', pays:'Mali', ville:'Bamako', online:true, color:'var(--gold)'},
+      {id:'p2', nom:'Bélanger', prenom:'Marc', fonction:'Spécialiste — Hématologie', fonction_en:'Specialist — Hematology', pays:'Canada', ville:'Montréal', online:true, color:'var(--teal)'},
+      {id:'p3', nom:'Nguema', prenom:'Sylvie', fonction:'Spécialiste — Pédiatrie', fonction_en:'Specialist — Pediatrics', pays:'Gabon', ville:'Libreville', online:true, color:'var(--blue)'},
+      {id:'p4', nom:'Dubreuil', prenom:'Claire', fonction:'Médecins Sans Frontières', fonction_en:'Doctors Without Borders', pays:'France', ville:'en mission', online:false, color:'var(--coral)'}
+    ];
+    var SEED_MESSAGES = [
+      {from:'p1', text:'Bonjour à tous. J\'ai un enfant de 6 ans suivi pour drépanocytose, 3ᵉ crise vaso-occlusive sévère en 4 mois malgré l\'hydroxyurée bien conduite. Je me demande si une évaluation pour une greffe de moelle a du sens ici. Des avis ?',
+       text_en:'Hello everyone. I have a 6-year-old followed for sickle cell disease, 3rd severe vaso-occlusive crisis in 4 months despite well-managed hydroxyurea. Wondering if a bone marrow transplant evaluation makes sense here. Any thoughts?'},
+      {from:'p2', text:'Bonjour Dr Traoré. Oui, ce profil — crises récurrentes malgré traitement optimal — entre typiquement dans les critères d\'évaluation pour allogreffe. La première étape est le typage HLA de la fratrie si elle existe. Vous avez des frères/sœurs compatibles potentiels ?',
+       text_en:'Hello Dr. Traoré. Yes, this profile — recurring crises despite optimal treatment — typically falls within transplant evaluation criteria. First step is HLA typing of siblings if any exist. Any potentially matching siblings?'},
+      {from:'p1', text:'Une sœur aînée, jamais testée. Je vais orienter la famille vers un typage HLA. Merci Dr Bélanger, ça change beaucoup pour cette famille.',
+       text_en:'An older sister, never tested. I\'ll refer the family for HLA typing. Thank you Dr. Bélanger, this changes a lot for this family.'},
+      {from:'p3', text:'Je peux partager un protocole de suivi post-crise qu\'on utilise à Libreville, utile en attendant les résultats du typage. Je le joins.', file:true, fileName:'Protocole-suivi-VOC-pediatrie.pdf', fileSize:'214 Ko',
+       text_en:'I can share a post-crisis follow-up protocol we use in Libreville, useful while waiting for typing results. Attaching it.'}
+    ];
+    var state = { messages: [] };
+    function peerById(id){ return PEERS.filter(function(p){ return p.id === id; })[0]; }
+
+    function renderRoster(){
+      var el = document.getElementById('rosterList');
+      el.innerHTML = '';
+      var meNom = localStorage.getItem('so_nom') || '';
+      var mePrenom = localStorage.getItem('so_prenom') || '';
+      var mePays = localStorage.getItem('so_pays') || '';
+      var meFonction = localStorage.getItem('so_fonction') || '';
+      var all = PEERS.slice();
+      all.push({id:'me', nom:meNom, prenom:mePrenom, fonction:meFonction, fonction_en:meFonction, pays:mePays, ville:localStorage.getItem('so_ville')||'', online:true, color:'var(--violet)', me:true});
+      var onlineCount = all.filter(function(p){ return p.online; }).length;
+      document.getElementById('rosterCount').textContent = (lang()==='en' ? onlineCount + ' doctors online' : onlineCount + ' médecins en ligne');
+      all.forEach(function(p){
+        var row = document.createElement('div');
+        row.className = 'roster-row';
+        row.innerHTML =
+          '<div class="so-avatar" style="background:' + p.color + '">' + initials(p.nom,p.prenom) + '<span class="so-dot' + (p.online?'':' off') + '"></span></div>' +
+          '<div class="roster-info"><div class="n">' + (p.me ? (lang()==='en'?'You':'Vous') : ('Dr ' + p.prenom + ' ' + p.nom)) + '</div>' +
+          '<div class="m">' + (lang()==='en' ? p.fonction_en : p.fonction) + ' · ' + p.pays + '</div></div>';
+        el.appendChild(row);
+      });
+    }
+
+    function renderFeed(){
+      var feed = document.getElementById('soFeed');
+      feed.innerHTML = '';
+      state.messages.forEach(function(m){
+        var isMe = m.from === 'me';
+        var peer = isMe ? null : peerById(m.from);
+        var row = document.createElement('div');
+        row.className = 'msg' + (isMe ? ' me' : '');
+        var avatarColor = isMe ? 'var(--violet)' : (peer ? peer.color : 'var(--ink-faint)');
+        var avatarInitials = isMe ? initials(localStorage.getItem('so_nom'), localStorage.getItem('so_prenom')) : initials(peer.nom, peer.prenom);
+        var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + peer.prenom + ' ' + peer.nom);
+        row.innerHTML =
+          '<div class="so-avatar" style="background:' + avatarColor + '">' + avatarInitials + '</div>' +
+          '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + '</div>';
+        feed.appendChild(row);
+      });
+      feed.scrollTop = feed.scrollHeight;
+      bindFeedPlayButtons();
+    }
+
+    function seedIfNeeded(){
+      if (state.messages.length) return;
+      SEED_MESSAGES.forEach(function(m){ state.messages.push(m); });
+    }
+
+    document.getElementById('btnLogin').addEventListener('click', function(){
+      var email = document.getElementById('soEmail').value.trim();
+      if (!email) { document.getElementById('soEmail').focus(); return; }
+      try {
+        localStorage.setItem('so_email', email);
+        var hasProfile = localStorage.getItem('so_nom') && localStorage.getItem('so_prenom');
+        if (hasProfile) { seedIfNeeded(); renderRoster(); renderFeed(); showStep('stepRoom'); }
+        else showStep('stepProfile');
+      } catch(e){ showStep('stepProfile'); }
+    });
+
+    document.getElementById('btnJoin').addEventListener('click', function(){
+      var nom = document.getElementById('pNom').value.trim();
+      var prenom = document.getElementById('pPrenom').value.trim();
+      var fonction = document.getElementById('pFonction').value;
+      var pays = document.getElementById('pPays').value.trim();
+      var ville = document.getElementById('pVille').value.trim();
+      if (!nom || !prenom || !fonction || !pays || !ville) return;
+      try {
+        localStorage.setItem('so_nom', nom);
+        localStorage.setItem('so_prenom', prenom);
+        localStorage.setItem('so_fonction', fonction);
+        localStorage.setItem('so_poste', document.getElementById('pPoste').value.trim());
+        localStorage.setItem('so_pays', pays);
+        localStorage.setItem('so_ville', ville);
+      } catch(e){}
+      seedIfNeeded();
+      renderRoster();
+      renderFeed();
+      showStep('stepRoom');
+    });
+
+    try {
+      if (localStorage.getItem('so_email')) document.getElementById('soEmail').value = localStorage.getItem('so_email');
+    } catch(e){}
+
+    window.SO_ACTIONS = {
+      sendText: function(){
+        var txt = soInput.value.trim();
+        if (!txt) return;
+        state.messages.push({from:'me', text:txt, text_en:txt});
+        soInput.value = '';
+        soInput.style.height = 'auto';
+        renderFeed();
+      },
+      sendFile: function(f){
+        var sizeKo = Math.max(1, Math.round(f.size/1024));
+        state.messages.push({from:'me', file:true, fileName:f.name, fileSize:sizeKo + ' Ko'});
+        renderFeed();
+      },
+      sendVocal: function(blob, dur){
+        state.messages.push({from:'me', vocal:true, audioUrl:URL.createObjectURL(blob), dur:dur});
+        renderFeed();
+      }
+    };
+  }
+
+  // ======================================================================
+  // MODE FIREBASE — projet configuré : auth, Firestore, Storage réels
+  // ======================================================================
+  function startFirebaseMode(){
+    firebase.initializeApp(FIREBASE_CONFIG);
+    var auth = firebase.auth();
+    var db = firebase.firestore();
+    var storage = firebase.storage();
+    var uid = null, meProfile = null, presenceTimer = null;
+
+    document.getElementById('composeNote').textContent = lang()==='en'
+      ? 'Connected — your messages are shared live with the whole circle.'
+      : 'Connecté — vos messages sont partagés en direct avec tout le cercle.';
+
+    function showError(msg){
+      var el = document.getElementById('loginError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    document.getElementById('btnLogin').addEventListener('click', function(){
+      var email = document.getElementById('soEmail').value.trim();
+      var pass = document.getElementById('soPassword').value;
+      if (!email || !pass) return;
+      document.getElementById('loginError').style.display = 'none';
+      auth.signInWithEmailAndPassword(email, pass).catch(function(err){
+        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          auth.createUserWithEmailAndPassword(email, pass).catch(function(err2){
+            showError(err2.message);
+          });
+        } else {
+          showError(err.message);
+        }
+      });
+    });
+
+    auth.onAuthStateChanged(function(user){
+      if (!user) return;
+      uid = user.uid;
+      db.collection('doctors').doc(uid).get().then(function(doc){
+        if (doc.exists && doc.data().nom) {
+          meProfile = doc.data();
+          enterRoom();
+        } else {
+          showStep('stepProfile');
+        }
+      });
+    });
+
+    document.getElementById('btnJoin').addEventListener('click', function(){
+      var nom = document.getElementById('pNom').value.trim();
+      var prenom = document.getElementById('pPrenom').value.trim();
+      var fonction = document.getElementById('pFonction').value;
+      var pays = document.getElementById('pPays').value.trim();
+      var ville = document.getElementById('pVille').value.trim();
+      if (!nom || !prenom || !fonction || !pays || !ville || !uid) return;
+      var photoFile = document.getElementById('pPhoto').files[0];
+      var profile = {
+        nom:nom, prenom:prenom, fonction:fonction, poste:document.getElementById('pPoste').value.trim(),
+        pays:pays, ville:ville, email:auth.currentUser.email,
+        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      function save(photoURL){
+        if (photoURL) profile.photoURL = photoURL;
+        db.collection('doctors').doc(uid).set(profile, { merge:true }).then(function(){
+          meProfile = profile;
+          enterRoom();
+        });
+      }
+      if (photoFile) {
+        storage.ref('doctor_photos/' + uid).put(photoFile).then(function(snap){
+          return snap.ref.getDownloadURL();
+        }).then(save).catch(function(){ save(null); });
+      } else {
+        save(null);
+      }
+    });
+
+    function enterRoom(){
+      showStep('stepRoom');
+      db.collection('doctors').doc(uid).update({ lastActive: firebase.firestore.FieldValue.serverTimestamp() });
+      presenceTimer = setInterval(function(){
+        db.collection('doctors').doc(uid).update({ lastActive: firebase.firestore.FieldValue.serverTimestamp() });
+      }, 25000);
+
+      db.collection('doctors').onSnapshot(function(snap){
+        var now = Date.now();
+        var docs = [];
+        snap.forEach(function(d){ docs.push(Object.assign({ id:d.id }, d.data())); });
+        docs.sort(function(a,b){ return (a.id===uid?-1:0) - (b.id===uid?-1:0); });
+        var onlineCount = 0;
+        var el = document.getElementById('rosterList');
+        el.innerHTML = '';
+        docs.forEach(function(p, i){
+          var lastActiveMs = p.lastActive && p.lastActive.toMillis ? p.lastActive.toMillis() : 0;
+          var online = (now - lastActiveMs) < 60000;
+          if (online) onlineCount++;
+          var color = ['var(--gold)','var(--teal)','var(--blue)','var(--coral)','var(--violet)'][i % 5];
+          var isMe = p.id === uid;
+          var row = document.createElement('div');
+          row.className = 'roster-row';
+          row.innerHTML =
+            '<div class="so-avatar" style="background:' + color + '">' +
+            (p.photoURL ? '<img src="' + p.photoURL + '" alt="">' : initials(p.nom, p.prenom)) +
+            '<span class="so-dot' + (online?'':' off') + '"></span></div>' +
+            '<div class="roster-info"><div class="n">' + (isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + p.prenom + ' ' + p.nom)) + '</div>' +
+            '<div class="m">' + (p.fonction||'') + ' · ' + (p.pays||'') + '</div></div>';
+          el.appendChild(row);
+        });
+        document.getElementById('rosterCount').textContent = (lang()==='en' ? onlineCount + ' doctors online' : onlineCount + ' médecins en ligne');
+      });
+
+      db.collection('so_messages').orderBy('createdAt', 'asc').limitToLast(200).onSnapshot(function(snap){
+        var feed = document.getElementById('soFeed');
+        feed.innerHTML = '';
+        snap.forEach(function(d){
+          var m = d.data();
+          var isMe = m.uid === uid;
+          var row = document.createElement('div');
+          row.className = 'msg' + (isMe ? ' me' : '');
+          var color = isMe ? 'var(--violet)' : 'var(--blue)';
+          var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + m.prenom + ' ' + m.nom);
+          row.innerHTML =
+            '<div class="so-avatar" style="background:' + color + '">' + initials(m.nom, m.prenom) + '</div>' +
+            '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + '</div>';
+          feed.appendChild(row);
+        });
+        feed.scrollTop = feed.scrollHeight;
+        bindFeedPlayButtons();
+      });
+    }
+
+    window.SO_ACTIONS = {
+      sendText: function(){
+        var txt = soInput.value.trim();
+        if (!txt || !uid || !meProfile) return;
+        soInput.value = '';
+        soInput.style.height = 'auto';
+        db.collection('so_messages').add({
+          uid:uid, nom:meProfile.nom, prenom:meProfile.prenom, text:txt,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      },
+      sendFile: function(f){
+        if (!uid || !meProfile) return;
+        var sizeKo = Math.max(1, Math.round(f.size/1024));
+        var path = 'so_files/' + uid + '/' + Date.now() + '_' + f.name;
+        storage.ref(path).put(f).then(function(snap){ return snap.ref.getDownloadURL(); }).then(function(url){
+          db.collection('so_messages').add({
+            uid:uid, nom:meProfile.nom, prenom:meProfile.prenom,
+            file:true, fileUrl:url, fileName:f.name, fileSize:sizeKo + ' Ko',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      },
+      sendVocal: function(blob, dur){
+        if (!uid || !meProfile) return;
+        var path = 'so_voice/' + uid + '/' + Date.now() + '.webm';
+        storage.ref(path).put(blob).then(function(snap){ return snap.ref.getDownloadURL(); }).then(function(url){
+          db.collection('so_messages').add({
+            uid:uid, nom:meProfile.nom, prenom:meProfile.prenom,
+            vocal:true, audioUrl:url, dur:dur,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      }
+    };
+  }
+
+  if (window.FIREBASE_READY && window.firebase) startFirebaseMode();
+  else startDemoMode();
 })();
 </script>
 </body>
