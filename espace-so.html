@@ -134,10 +134,17 @@
   }
   .so-avatar img{width:100%; height:100%; object-fit:cover;}
   .so-dot{
-    position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%;
-    background:var(--ok); border:2px solid var(--bg-panel);
+    position:absolute; bottom:-2px; right:-2px; width:14px; height:14px; border-radius:50%;
+    background:#3EE07A; border:2.5px solid var(--bg-panel);
+    box-shadow:0 0 0 0 rgba(62,224,122,.6), 0 0 8px 1px rgba(62,224,122,.7);
+    animation:so-dot-pulse 1.8s ease-in-out infinite;
   }
-  .so-dot.off{background:var(--ink-faint);}
+  .so-dot.off{background:var(--ink-faint); box-shadow:none; animation:none;}
+  @keyframes so-dot-pulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(62,224,122,.55), 0 0 8px 1px rgba(62,224,122,.7);}
+    50%{box-shadow:0 0 0 6px rgba(62,224,122,0), 0 0 10px 2px rgba(62,224,122,.9);}
+  }
+  @media (prefers-reduced-motion:reduce){ .so-dot{animation:none;} }
   .roster-info{min-width:0;}
   .roster-info .n{font-size:13px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .roster-info .m{font-size:11.5px; color:var(--ink-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -192,9 +199,33 @@
   }
   .so-icon-btn:hover{border-color:var(--gold-line); color:var(--gold);}
   .so-icon-btn.send{background:linear-gradient(135deg, var(--violet), #6E4FE0); color:#fff; border:none;}
-  .so-icon-btn.mic.recording{border-color:var(--coral); color:var(--coral); background:var(--coral-soft); animation:micPulse 1.1s ease-in-out infinite;}
-  @keyframes micPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(232,131,107,.45);} 50%{box-shadow:0 0 0 7px rgba(232,131,107,0);} }
+  .so-icon-btn.mic{position:relative;}
+  .so-icon-btn.mic.recording{
+    border-color:#E8483C; color:#fff; background:#E8483C;
+    box-shadow:0 0 0 0 rgba(232,72,60,.55); animation:micPulse 1.1s ease-in-out infinite;
+  }
+  .so-icon-btn.mic.recording::before, .so-icon-btn.mic.recording::after{
+    content:''; position:absolute; inset:0; border-radius:50%; border:2px solid #E8483C;
+    animation:micWave 1.6s ease-out infinite;
+  }
+  .so-icon-btn.mic.recording::after{ animation-delay:.55s; }
+  @keyframes micWave{
+    0%{transform:scale(1); opacity:.85;}
+    100%{transform:scale(2.1); opacity:0;}
+  }
+  @keyframes micPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(232,72,60,.5);} 50%{box-shadow:0 0 0 8px rgba(232,72,60,0);} }
+  .so-icon-btn.mic.sent{border-color:var(--ok); color:#fff; background:var(--ok); transition:background .2s, border-color .2s, color .2s;}
+  @media (prefers-reduced-motion:reduce){ .so-icon-btn.mic.recording::before, .so-icon-btn.mic.recording::after{animation:none;} }
   .so-compose-note{font-size:10.5px; color:var(--ink-faint); margin-top:8px; text-align:center;}
+
+  .so-toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+    background:#2a1210; border:1px solid rgba(232,72,60,.5); border-radius:14px;
+    padding:13px 18px; display:flex; align-items:center; gap:10px; max-width:min(420px,88vw);
+    box-shadow:0 20px 50px -20px rgba(0,0,0,.6); z-index:300; opacity:0; pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease; font-size:13px; color:var(--ink);
+  }
+  .so-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
   .demo-note{text-align:center; font-family:var(--mono); font-size:11px; color:var(--ink-faint); margin-top:34px; letter-spacing:.03em;}
   .step{display:none;}
@@ -479,14 +510,33 @@
       mediaRecorder.onstop = function(){
         var blob = new Blob(audioChunks, { type:'audio/webm' });
         var dur = fmtDur((Date.now()-recStart)/1000);
-        window.SO_ACTIONS.sendVocal(blob, dur);
         stream.getTracks().forEach(function(t){ t.stop(); });
         micBtn.classList.remove('recording');
+        Promise.resolve(window.SO_ACTIONS.sendVocal(blob, dur)).then(function(){
+          micBtn.classList.add('sent');
+          setTimeout(function(){ micBtn.classList.remove('sent'); }, 900);
+        }).catch(function(err){
+          showToast(lang()==='en'
+            ? 'Voice message could not be sent (' + (err && err.message ? err.message : 'error') + ').'
+            : 'Le message vocal n\'a pas pu être envoyé (' + (err && err.message ? err.message : 'erreur') + ').');
+        });
       };
       mediaRecorder.start();
       micBtn.classList.add('recording');
     }).catch(function(){});
   });
+
+  function showToast(msg){
+    var t = document.createElement('div');
+    t.className = 'so-toast';
+    t.innerHTML = '<span>⚠️</span><span>' + msg + '</span>';
+    document.body.appendChild(t);
+    requestAnimationFrame(function(){ t.classList.add('show'); });
+    setTimeout(function(){
+      t.classList.remove('show');
+      setTimeout(function(){ t.remove(); }, 350);
+    }, 5000);
+  }
 
   function bindFeedPlayButtons(){
     document.querySelectorAll('#soFeed .playbtn').forEach(function(btn){
@@ -677,9 +727,11 @@
       });
     });
 
+    var meEmail = null;
     auth.onAuthStateChanged(function(user){
       if (!user) return;
       uid = user.uid;
+      meEmail = user.email;
       db.collection('doctors').doc(uid).get().then(function(doc){
         if (doc.exists && doc.data().nom) {
           meProfile = doc.data();
@@ -687,7 +739,7 @@
         } else {
           showStep('stepProfile');
         }
-      });
+      }).catch(function(err){ showToast(lang()==='en' ? 'Could not load your profile: ' + err.message : 'Impossible de charger votre fiche : ' + err.message); });
     });
 
     document.getElementById('btnJoin').addEventListener('click', function(){
@@ -700,7 +752,7 @@
       var photoFile = document.getElementById('pPhoto').files[0];
       var profile = {
         nom:nom, prenom:prenom, fonction:fonction, poste:document.getElementById('pPoste').value.trim(),
-        pays:pays, ville:ville, email:auth.currentUser.email,
+        pays:pays, ville:ville, email:meEmail,
         lastActive: firebase.firestore.FieldValue.serverTimestamp(),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
@@ -709,6 +761,8 @@
         db.collection('doctors').doc(uid).set(profile, { merge:true }).then(function(){
           meProfile = profile;
           enterRoom();
+        }).catch(function(err){
+          showToast(lang()==='en' ? 'Could not save your profile: ' + err.message : 'Impossible d\'enregistrer votre fiche : ' + err.message);
         });
       }
       if (photoFile) {
@@ -772,39 +826,46 @@
       });
     }
 
+    function reportSendError(err){
+      showToast(lang()==='en'
+        ? 'Message could not be sent (' + (err && err.message ? err.message : 'error') + ').'
+        : 'Le message n\'a pas pu être envoyé (' + (err && err.message ? err.message : 'erreur') + ').');
+      throw err;
+    }
+
     window.SO_ACTIONS = {
       sendText: function(){
         var txt = soInput.value.trim();
-        if (!txt || !uid || !meProfile) return;
+        if (!txt || !uid || !meProfile) return Promise.resolve();
         soInput.value = '';
         soInput.style.height = 'auto';
-        db.collection('so_messages').add({
+        return db.collection('so_messages').add({
           uid:uid, nom:meProfile.nom, prenom:meProfile.prenom, text:txt,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        }).catch(reportSendError);
       },
       sendFile: function(f){
-        if (!uid || !meProfile) return;
+        if (!uid || !meProfile) return Promise.resolve();
         var sizeKo = Math.max(1, Math.round(f.size/1024));
         var path = 'so_files/' + uid + '/' + Date.now() + '_' + f.name;
-        uploadToSupabaseMedia(path, f).then(function(url){
-          db.collection('so_messages').add({
+        return uploadToSupabaseMedia(path, f).then(function(url){
+          return db.collection('so_messages').add({
             uid:uid, nom:meProfile.nom, prenom:meProfile.prenom,
             file:true, fileUrl:url, fileName:f.name, fileSize:sizeKo + ' Ko',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
-        });
+        }).catch(reportSendError);
       },
       sendVocal: function(blob, dur){
-        if (!uid || !meProfile) return;
+        if (!uid || !meProfile) return Promise.resolve();
         var path = 'so_voice/' + uid + '/' + Date.now() + '.webm';
-        uploadToSupabaseMedia(path, blob).then(function(url){
-          db.collection('so_messages').add({
+        return uploadToSupabaseMedia(path, blob).then(function(url){
+          return db.collection('so_messages').add({
             uid:uid, nom:meProfile.nom, prenom:meProfile.prenom,
             vocal:true, audioUrl:url, dur:dur,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
-        });
+        }).catch(reportSendError);
       }
     };
   }
