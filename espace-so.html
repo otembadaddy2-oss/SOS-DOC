@@ -399,8 +399,25 @@
 <script>if (window.FIREBASE_READY) { document.write(
   '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><\/script>' +
   '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"><\/script>' +
-  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"><\/script>' +
-  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"><\/script>'
+  '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"><\/script>'
+); }</script>
+
+<!--
+  ====================================================================
+  SUPABASE — stockage des messages vocaux et fichiers (bucket "so-media").
+  Choisi à la place de Firebase Storage car il ne demande pas de carte
+  bancaire sur son offre gratuite. Tant que SUPABASE_URL vaut
+  "REPLACE_ME", l'envoi de vocal/fichiers échoue silencieusement — le
+  reste (texte, présence, profils) continue de fonctionner normalement.
+  ====================================================================
+-->
+<script>
+  var SUPABASE_URL = "https://jzrtiadzhwwdokskimpe.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_6u3qL18t8L5A0jsKfGb8DA_ogsMT9XW";
+  var SUPABASE_READY = SUPABASE_URL !== "REPLACE_ME";
+</script>
+<script>if (window.SUPABASE_READY) { document.write(
+  '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>'
 ); }</script>
 
 <script>
@@ -622,8 +639,17 @@
     firebase.initializeApp(FIREBASE_CONFIG);
     var auth = firebase.auth();
     var db = firebase.firestore();
-    var storage = firebase.storage();
+    var sb = (window.SUPABASE_READY && window.supabase) ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
     var uid = null, meProfile = null, presenceTimer = null;
+
+    // uploads a File/Blob to the "so-media" Supabase bucket, resolves to its public URL
+    function uploadToSupabaseMedia(path, fileOrBlob){
+      if (!sb) return Promise.reject(new Error('Supabase not configured'));
+      return sb.storage.from('so-media').upload(path, fileOrBlob).then(function(res){
+        if (res.error) throw res.error;
+        return sb.storage.from('so-media').getPublicUrl(path).data.publicUrl;
+      });
+    }
 
     document.getElementById('composeNote').textContent = lang()==='en'
       ? 'Connected — your messages are shared live with the whole circle.'
@@ -686,9 +712,7 @@
         });
       }
       if (photoFile) {
-        storage.ref('doctor_photos/' + uid).put(photoFile).then(function(snap){
-          return snap.ref.getDownloadURL();
-        }).then(save).catch(function(){ save(null); });
+        uploadToSupabaseMedia('doctor_photos/' + uid + '_' + Date.now(), photoFile).then(save).catch(function(){ save(null); });
       } else {
         save(null);
       }
@@ -763,7 +787,7 @@
         if (!uid || !meProfile) return;
         var sizeKo = Math.max(1, Math.round(f.size/1024));
         var path = 'so_files/' + uid + '/' + Date.now() + '_' + f.name;
-        storage.ref(path).put(f).then(function(snap){ return snap.ref.getDownloadURL(); }).then(function(url){
+        uploadToSupabaseMedia(path, f).then(function(url){
           db.collection('so_messages').add({
             uid:uid, nom:meProfile.nom, prenom:meProfile.prenom,
             file:true, fileUrl:url, fileName:f.name, fileSize:sizeKo + ' Ko',
@@ -774,7 +798,7 @@
       sendVocal: function(blob, dur){
         if (!uid || !meProfile) return;
         var path = 'so_voice/' + uid + '/' + Date.now() + '.webm';
-        storage.ref(path).put(blob).then(function(snap){ return snap.ref.getDownloadURL(); }).then(function(url){
+        uploadToSupabaseMedia(path, blob).then(function(url){
           db.collection('so_messages').add({
             uid:uid, nom:meProfile.nom, prenom:meProfile.prenom,
             vocal:true, audioUrl:url, dur:dur,
