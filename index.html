@@ -6,6 +6,9 @@
 <title>SOS DOC — Un monde. Un médecin. Un espoir.</title>
 <meta name="description" content="SOS DOC — plateforme internationale de téléconsultation médicale pédiatrique. Un monde. Un médecin. Un espoir.">
 <link rel="icon" href="assets/img/favicon.webp">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#06070f">
+<link rel="apple-touch-icon" href="assets/img/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -147,6 +150,12 @@
   @media (prefers-reduced-motion:reduce){ .brand img{animation:none;} }
   .brand small{display:block; font-family:var(--mono); font-weight:400; font-size:10px; color:var(--ink-faint); letter-spacing:.06em;}
   .nav-links{display:flex; gap:22px; font-size:14px; color:var(--ink-muted); align-items:center;}
+  #pwaInstallBtn{
+    font-family:var(--sans); font-weight:600; font-size:13px; letter-spacing:.01em;
+    background:transparent; border:1px solid var(--gold-line); color:var(--gold);
+    padding:9px 18px; border-radius:999px; cursor:pointer; transition:background .2s, color .2s;
+  }
+  #pwaInstallBtn:hover{background:var(--gold); color:#1a1204;}
   .nav-links a{text-decoration:none; transition:color .2s;}
   .nav-links a:hover{color:var(--gold);}
   @media (max-width:640px){ .nav-links a{display:none;} }
@@ -447,6 +456,7 @@
       <a href="#carrieres" data-en="Careers">Carrières</a>
       <a href="#avis" data-en="Feedback">Avis</a>
       <a href="#urgence" data-en="Emergency">Urgence</a>
+      <button id="pwaInstallBtn" hidden data-en="Install the app">Installer l'appli</button>
       <div class="lang-switch" role="group" aria-label="Langue / Language">
         <button class="lang-btn" data-lang="fr" aria-pressed="true">FR</button>
         <button class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
@@ -890,5 +900,6 @@
 })();
 </script>
 <script src="assets/js/pioupiou.js" defer></script>
+<script src="assets/js/pwa.js" defer></script>
 </body>
 </html>
