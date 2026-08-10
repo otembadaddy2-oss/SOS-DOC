@@ -174,6 +174,8 @@
   .msg-body{min-width:0;}
   .msg .who{font-size:11px; color:#8A93A6; margin-bottom:3px; display:flex; gap:6px; align-items:baseline;}
   .msg.me .who{justify-content:flex-end;}
+  .msg-delete{border:0; background:none; color:#8A93A6; font-size:11px; line-height:1; cursor:pointer; padding:2px; opacity:.7;}
+  .msg-delete:hover{color:var(--coral); opacity:1;}
   .bubble{
     background:#F2F3F8; border:1px solid #E3E6EF; border-radius:14px 14px 14px 4px;
     padding:10px 13px; font-size:13.8px; line-height:1.55; color:#1B2333;
@@ -649,9 +651,10 @@
         var avatarColor = isMe ? 'var(--violet)' : (peer ? peer.color : 'var(--ink-faint)');
         var avatarInitials = isMe ? initials(localStorage.getItem('so_nom'), localStorage.getItem('so_prenom')) : initials(peer.nom, peer.prenom);
         var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + peer.prenom + ' ' + peer.nom);
+        var delBtn = (isMe && m.id) ? ' <button class="msg-delete" data-id="' + m.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button>' : '';
         row.innerHTML =
           '<div class="so-avatar" style="background:' + avatarColor + '">' + avatarInitials + '</div>' +
-          '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + '</div>';
+          '<div class="msg-body"><div class="who">' + whoName + delBtn + '</div>' + bubbleHTML(m) + '</div>';
         feed.appendChild(row);
       });
       feed.scrollTop = feed.scrollHeight;
@@ -699,22 +702,32 @@
       if (localStorage.getItem('so_email')) document.getElementById('soEmail').value = localStorage.getItem('so_email');
     } catch(e){}
 
+    function newId(){ return 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+    document.getElementById('soFeed').addEventListener('click', function(e){
+      var btn = e.target.closest('.msg-delete');
+      if (!btn) return;
+      if (!confirm(lang()==='en' ? 'Delete this message?' : 'Supprimer ce message ?')) return;
+      state.messages = state.messages.filter(function(m){ return m.id !== btn.dataset.id; });
+      renderFeed();
+    });
+
     window.SO_ACTIONS = {
       sendText: function(){
         var txt = soInput.value.trim();
         if (!txt) return;
-        state.messages.push({from:'me', text:txt, text_en:txt});
+        state.messages.push({id:newId(), from:'me', text:txt, text_en:txt});
         soInput.value = '';
         soInput.style.height = 'auto';
         renderFeed();
       },
       sendFile: function(f){
         var sizeKo = Math.max(1, Math.round(f.size/1024));
-        state.messages.push({from:'me', file:true, fileName:f.name, fileSize:sizeKo + ' Ko'});
+        state.messages.push({id:newId(), from:'me', file:true, fileName:f.name, fileSize:sizeKo + ' Ko'});
         renderFeed();
       },
       sendVocal: function(blob, dur){
-        state.messages.push({from:'me', vocal:true, audioUrl:URL.createObjectURL(blob), dur:dur});
+        state.messages.push({id:newId(), from:'me', vocal:true, audioUrl:URL.createObjectURL(blob), dur:dur});
         renderFeed();
       }
     };
@@ -844,19 +857,31 @@
         document.getElementById('rosterCount').textContent = (lang()==='en' ? onlineCount + ' doctors online' : onlineCount + ' médecins en ligne');
       });
 
+      document.getElementById('soFeed').addEventListener('click', function(e){
+        var btn = e.target.closest('.msg-delete');
+        if (!btn) return;
+        if (!confirm(lang()==='en' ? 'Delete this message?' : 'Supprimer ce message ?')) return;
+        db.collection('so_messages').doc(btn.dataset.id).delete().catch(function(){
+          showToast(lang()==='en' ? 'Could not delete message.' : 'Suppression impossible.');
+        });
+      });
+
       db.collection('so_messages').orderBy('createdAt', 'asc').limitToLast(200).onSnapshot(function(snap){
         var feed = document.getElementById('soFeed');
         feed.innerHTML = '';
+        var isModerator = meProfile && meProfile.fonction === 'Fondateur / Administrateur';
         snap.forEach(function(d){
           var m = d.data();
           var isMe = m.uid === uid;
+          var canDelete = isMe || isModerator;
           var row = document.createElement('div');
           row.className = 'msg' + (isMe ? ' me' : '');
           var color = isMe ? 'var(--violet)' : 'var(--blue)';
           var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + m.prenom + ' ' + m.nom);
+          var delBtn = canDelete ? ' <button class="msg-delete" data-id="' + d.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button>' : '';
           row.innerHTML =
             '<div class="so-avatar" style="background:' + color + '">' + initials(m.nom, m.prenom) + '</div>' +
-            '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + '</div>';
+            '<div class="msg-body"><div class="who">' + whoName + delBtn + '</div>' + bubbleHTML(m) + '</div>';
           feed.appendChild(row);
         });
         feed.scrollTop = feed.scrollHeight;
