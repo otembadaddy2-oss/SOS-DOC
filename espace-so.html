@@ -174,8 +174,9 @@
   .msg-body{min-width:0;}
   .msg .who{font-size:11px; color:#8A93A6; margin-bottom:3px; display:flex; gap:6px; align-items:baseline;}
   .msg.me .who{justify-content:flex-end;}
-  .msg-delete{border:0; background:none; color:#8A93A6; font-size:11px; line-height:1; cursor:pointer; padding:2px; opacity:.7;}
-  .msg-delete:hover{color:var(--coral); opacity:1;}
+  .bubble-foot{display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-top:5px;}
+  .msg-delete{width:20px; height:20px; border-radius:50%; border:0; background:var(--gold-line); color:var(--gold); font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex:none;}
+  .msg-delete:hover{background:var(--coral-soft); color:var(--coral);}
   .bubble{
     background:#F2F3F8; border:1px solid #E3E6EF; border-radius:14px 14px 14px 4px;
     padding:10px 13px; font-size:13.8px; line-height:1.55; color:#1B2333;
@@ -651,10 +652,10 @@
         var avatarColor = isMe ? 'var(--violet)' : (peer ? peer.color : 'var(--ink-faint)');
         var avatarInitials = isMe ? initials(localStorage.getItem('so_nom'), localStorage.getItem('so_prenom')) : initials(peer.nom, peer.prenom);
         var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + peer.prenom + ' ' + peer.nom);
-        var delBtn = (isMe && m.id) ? ' <button class="msg-delete" data-id="' + m.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button>' : '';
+        var footHTML = (isMe && m.id) ? '<div class="bubble-foot"><button class="msg-delete" data-id="' + m.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button></div>' : '';
         row.innerHTML =
           '<div class="so-avatar" style="background:' + avatarColor + '">' + avatarInitials + '</div>' +
-          '<div class="msg-body"><div class="who">' + whoName + delBtn + '</div>' + bubbleHTML(m) + '</div>';
+          '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + footHTML + '</div>';
         feed.appendChild(row);
       });
       feed.scrollTop = feed.scrollHeight;
@@ -878,10 +879,10 @@
           row.className = 'msg' + (isMe ? ' me' : '');
           var color = isMe ? 'var(--violet)' : 'var(--blue)';
           var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + m.prenom + ' ' + m.nom);
-          var delBtn = canDelete ? ' <button class="msg-delete" data-id="' + d.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button>' : '';
+          var footHTML = canDelete ? '<div class="bubble-foot"><button class="msg-delete" data-id="' + d.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button></div>' : '';
           row.innerHTML =
             '<div class="so-avatar" style="background:' + color + '">' + initials(m.nom, m.prenom) + '</div>' +
-            '<div class="msg-body"><div class="who">' + whoName + delBtn + '</div>' + bubbleHTML(m) + '</div>';
+            '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + footHTML + '</div>';
           feed.appendChild(row);
         });
         feed.scrollTop = feed.scrollHeight;
