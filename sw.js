@@ -1,5 +1,5 @@
 // SOS DOC — Service Worker (installation & usage hors-ligne)
-const CACHE = "sos-doc-v2";
+const CACHE = "sos-doc-v3";
 const CORE_ASSETS = [
   "./",
   "index.html",

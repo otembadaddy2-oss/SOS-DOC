@@ -177,6 +177,8 @@
   .bubble-foot{display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-top:5px;}
   .msg-delete{width:20px; height:20px; border-radius:50%; border:0; background:var(--gold-line); color:var(--gold); font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex:none;}
   .msg-delete:hover{background:var(--coral-soft); color:var(--coral);}
+  .msg-report{width:20px; height:20px; border-radius:50%; border:0; background:var(--gold-line); color:var(--gold); font-size:11px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; flex:none; opacity:.75;}
+  .msg-report:hover{background:var(--coral-soft); color:var(--coral); opacity:1;}
   .bubble{
     background:#F2F3F8; border:1px solid #E3E6EF; border-radius:14px 14px 14px 4px;
     padding:10px 13px; font-size:13.8px; line-height:1.55; color:#1B2333;
@@ -487,6 +489,15 @@
     return '<div class="bubble">' + (txt||'').replace(/</g,'&lt;') + '</div>';
   }
 
+  function reportMessage(sender, snippet){
+    var reason = prompt(lang()==='en' ? 'Why are you reporting this message?' : 'Pourquoi signales-tu ce message ?');
+    if (reason === null) return;
+    var text = (lang()==='en' ? 'Report — SO circle (SOS DOC)\nMessage from: ' : 'Signalement — Cercle SO (SOS DOC)\nMessage de : ') + sender +
+      (lang()==='en' ? '\nContent: ' : '\nContenu : ') + snippet +
+      (lang()==='en' ? '\nReason: ' : '\nRaison : ') + (reason || (lang()==='en' ? '(not specified)' : '(non précisée)'));
+    window.open('https://wa.me/24255972427?text=' + encodeURIComponent(text), '_blank');
+  }
+
   function showStep(id){
     document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
@@ -652,7 +663,10 @@
         var avatarColor = isMe ? 'var(--violet)' : (peer ? peer.color : 'var(--ink-faint)');
         var avatarInitials = isMe ? initials(localStorage.getItem('so_nom'), localStorage.getItem('so_prenom')) : initials(peer.nom, peer.prenom);
         var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + peer.prenom + ' ' + peer.nom);
-        var footHTML = (isMe && m.id) ? '<div class="bubble-foot"><button class="msg-delete" data-id="' + m.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button></div>' : '';
+        var reportSnippet = (m.vocal ? '[message vocal]' : m.file ? ('[fichier] ' + (m.fileName||'')) : (m.text||'')).slice(0,200);
+        var reportBtn = !isMe ? '<button class="msg-report" data-report-sender="' + encodeURIComponent(whoName) + '" data-report-snippet="' + encodeURIComponent(reportSnippet) + '" title="' + (lang()==='en'?'Report':'Signaler') + '">🚩</button>' : '';
+        var delBtn = (isMe && m.id) ? '<button class="msg-delete" data-id="' + m.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button>' : '';
+        var footHTML = (reportBtn || delBtn) ? '<div class="bubble-foot">' + reportBtn + delBtn + '</div>' : '';
         row.innerHTML =
           '<div class="so-avatar" style="background:' + avatarColor + '">' + avatarInitials + '</div>' +
           '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + footHTML + '</div>';
@@ -706,6 +720,11 @@
     function newId(){ return 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
 
     document.getElementById('soFeed').addEventListener('click', function(e){
+      var reportBtn = e.target.closest('.msg-report');
+      if (reportBtn){
+        reportMessage(decodeURIComponent(reportBtn.dataset.reportSender||''), decodeURIComponent(reportBtn.dataset.reportSnippet||''));
+        return;
+      }
       var btn = e.target.closest('.msg-delete');
       if (!btn) return;
       if (!confirm(lang()==='en' ? 'Delete this message?' : 'Supprimer ce message ?')) return;
@@ -859,6 +878,11 @@
       });
 
       document.getElementById('soFeed').addEventListener('click', function(e){
+        var reportBtn = e.target.closest('.msg-report');
+        if (reportBtn){
+          reportMessage(decodeURIComponent(reportBtn.dataset.reportSender||''), decodeURIComponent(reportBtn.dataset.reportSnippet||''));
+          return;
+        }
         var btn = e.target.closest('.msg-delete');
         if (!btn) return;
         if (!confirm(lang()==='en' ? 'Delete this message?' : 'Supprimer ce message ?')) return;
@@ -879,7 +903,10 @@
           row.className = 'msg' + (isMe ? ' me' : '');
           var color = isMe ? 'var(--violet)' : 'var(--blue)';
           var whoName = isMe ? (lang()==='en'?'You':'Vous') : ('Dr ' + m.prenom + ' ' + m.nom);
-          var footHTML = canDelete ? '<div class="bubble-foot"><button class="msg-delete" data-id="' + d.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button></div>' : '';
+          var reportSnippet = (m.vocal ? '[message vocal]' : m.file ? ('[fichier] ' + (m.fileName||'')) : ((lang()==='en' && m.text_en ? m.text_en : m.text)||'')).slice(0,200);
+          var reportBtn = !isMe ? '<button class="msg-report" data-report-sender="' + encodeURIComponent(whoName) + '" data-report-snippet="' + encodeURIComponent(reportSnippet) + '" title="' + (lang()==='en'?'Report':'Signaler') + '">🚩</button>' : '';
+          var delBtn = canDelete ? '<button class="msg-delete" data-id="' + d.id + '" title="' + (lang()==='en'?'Delete':'Supprimer') + '">🗑</button>' : '';
+          var footHTML = (reportBtn || delBtn) ? '<div class="bubble-foot">' + reportBtn + delBtn + '</div>' : '';
           row.innerHTML =
             '<div class="so-avatar" style="background:' + color + '">' + initials(m.nom, m.prenom) + '</div>' +
             '<div class="msg-body"><div class="who">' + whoName + '</div>' + bubbleHTML(m) + footHTML + '</div>';
